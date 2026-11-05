@@ -4,8 +4,6 @@ A free, browser-based training lab where students practise the daily work of a *
 
 It is a single HTML file, with no install, no server and no sign-up. It works on desktop and mobile.
 
-**▶ Live demo:** https://YOUR-USERNAME.github.io/soc-lab/
-
 ---
 
 ## Why this exists
