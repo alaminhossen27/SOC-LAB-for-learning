@@ -1,19 +1,26 @@
 #🛡️ SOC Lab — SIEM, SOAR & OWASP Top 10 Practice Simulator
 A free, browser-based training lab where students practise the daily work of a SOC (Security Operations Center) analyst: they detect, triage, investigate, respond and report on simulated incidents.
 It is a single HTML file, with no install, no server and no sign-up. It works on desktop and mobile.
-▶ Live demo: https://YOUR-USERNAME.github.io/soc-lab/
+
 Why this exists
 Real SIEM/SOAR platforms (Splunk, Sentinel, QRadar, XSOAR…) are expensive, heavy to set up, and come with no realistic attack data. SOC Lab gives learners a safe, fully simulated company network and web shop with hundreds of realistic log events. Hidden attacks and false alarms are mixed in, so students can build the right instincts before they touch production tools.
+
 Features
 SIEM search: a Splunk-style query language (stats, where, sort, head, table, wildcards, numeric filters). It also has a timeline histogram and clickable field values.
 40 detection rules: you can edit them, turn them on or off, or write your own and test them against the data.
+
 Alert triage: mark each alert true positive or false positive, then classify the attack type.
+
 SOAR playbook builder: chain response actions such as IP/hash enrichment, block IP/domain, isolate host, disable user, reset password, revoke sessions, quarantine email, create ticket and notify. Each action shows a simulated execution log.
+
 Scoring & debrief: you get points for correct answers, triage, classification and response. Harmful actions cost points (for example, blocking an authorised pentester). After you submit, a debrief explains what really happened, with OWASP and MITRE ATT&CK mapping.
+
 Randomised every time: IPs, users, domains, hashes and timings change on every start, so students can't copy each other's answers.
 Realistic log sources: web, firewall, auth, proxy, dns, edr and email, from a fictional company plus a fictional e-commerce site.
+
 Practice modes
 Mode
+
 What you get
 OWASP Top 10 Web Day
 4 random web-application attacks, often plus a harmless look-alike
@@ -25,6 +32,7 @@ Story missions
 5 guided scenarios: brute force, phishing, C2 beaconing, insider exfiltration, false-positive scan
 Alert coverage (32 types)
 OWASP Top 10:2025
+
 #
 Category
 Scenario(s)
